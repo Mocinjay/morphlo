@@ -7,7 +7,7 @@ cd "$(dirname "$0")/.."
 
 VERSION="${VERSION:-0.1.0}"
 BUILD="${BUILD:-$(git rev-list --count HEAD 2>/dev/null || echo 1)}"
-APP="build/Morphlo.app"
+APP="${APP_OUT:-build/Morphlo.app}" # APP_OUT: build somewhere else (e.g. while a release is notarizing)
 
 swift build -c release --arch arm64 --arch x86_64
 BIN_DIR="$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)"

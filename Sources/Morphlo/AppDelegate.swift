@@ -110,21 +110,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         add(menu, "Also swap copied HEIC files for JPEGs", #selector(toggleCopiedFiles), on: Settings.convertCopiedFiles)
         menu.addItem(.separator())
 
+        // Videos: the main choice first, then the still-frame options it controls.
         let video = NSMenu()
+        func header(_ m: NSMenu, _ title: String) {
+            let h = m.addItem(withTitle: title, action: nil, keyEquivalent: "")
+            h.isEnabled = false
+        }
+        header(video, "When you drag a video into an AI chat")
+        add(video, "Send the full video (every frame + audio)", #selector(setVideoForAIVideo), on: Settings.videoForAI == .video)
+        add(video, "Send still frames instead", #selector(setVideoForAIFrames), on: Settings.videoForAI == .frames)
+        video.addItem(.separator())
+        header(video, Settings.videoForAI == .frames ? "Still frames" : "Still frames (used by the shelf)")
+        let style = NSMenu()
         for o in VideoOutput.allCases {
-            let item = add(video, o.title, #selector(setVideoOutput(_:)), on: Settings.videoOutput == o)
+            let item = add(style, o.title, #selector(setVideoOutput(_:)), on: Settings.videoOutput == o)
             item.representedObject = o.rawValue
         }
-        video.addItem(.separator())
+        video.addItem(withTitle: "What to make: \(Settings.videoOutput.title)", action: nil, keyEquivalent: "").submenu = style
+        let count = NSMenu()
         for n in [4, 8, 12, 16, 20] {
-            let item = add(video, "\(n) frames", #selector(setFrameCount(_:)), on: Settings.frameCount == n)
+            let item = add(count, "\(n) frames", #selector(setFrameCount(_:)), on: Settings.frameCount == n)
             item.tag = n
         }
-        video.addItem(.separator())
-        add(video, "Transcribe audio (on-device)", #selector(toggleTranscribe), on: Settings.transcribe)
-        video.addItem(.separator())
-        add(video, "Into AI chats: send frames + contact sheet", #selector(setVideoForAIFrames), on: Settings.videoForAI == .frames)
-        add(video, "Into AI chats: send the video file", #selector(setVideoForAIVideo), on: Settings.videoForAI == .video)
+        video.addItem(withTitle: "How many frames: \(Settings.frameCount)", action: nil, keyEquivalent: "").submenu = count
+        add(video, "Add a transcript of the audio (on-device)", #selector(toggleTranscribe), on: Settings.transcribe)
         menu.addItem(withTitle: "Videos", action: nil, keyEquivalent: "").submenu = video
 
         let size = NSMenu()
