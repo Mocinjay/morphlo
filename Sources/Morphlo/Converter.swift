@@ -145,7 +145,7 @@ enum ImageConverter {
 
 enum VideoConverter {
     static func convert(_ url: URL, outDir: URL, transcribe: Bool = true) async throws -> [URL] {
-        let asset = AVURLAsset(url: url)
+        let asset = AVURLAsset(url: url, options: [AVURLAssetReferenceRestrictionsKey: AVAssetReferenceRestrictions.forbidAll.rawValue])
         let duration = try await asset.load(.duration).seconds
         guard try await !asset.loadTracks(withMediaType: .video).isEmpty else { throw ConvertError.noVideoTrack }
 

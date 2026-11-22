@@ -22,7 +22,9 @@ if [ -z "$IDENTITY" ] && [ -z "${SKIP_NOTARIZE:-}" ]; then
   echo "No Developer ID Application certificate found. See the header of this script."; exit 1
 fi
 
-SIGN_IDENTITY="${IDENTITY:-}" VERSION="$VERSION" ./scripts/build-app.sh
+# Without a Developer ID, sign ad-hoc ("-"): never ship a build signed with a personal
+# Apple Development certificate (it embeds your Apple ID email).
+SIGN_IDENTITY="${IDENTITY:--}" VERSION="$VERSION" ./scripts/build-app.sh
 codesign --verify --strict --deep build/Morphlo.app
 
 mkdir -p "$DIST"
@@ -59,8 +61,8 @@ cp "$DMG" "$DIST/Morphlo-$VERSION.dmg"
 ( cd "$DIST" && shasum -a 256 Morphlo.zip Morphlo.dmg "Morphlo-$VERSION.zip" "Morphlo-$VERSION.dmg" > SHA256SUMS.txt )
 SHA="$(shasum -a 256 "$DIST/Morphlo-$VERSION.zip" | cut -d' ' -f1)"
 
-# 4) Keep the cask in sync
-sed -i '' -e "s/^  version \".*\"/  version \"$VERSION\"/" -e "s/^  sha256 \".*\"/  sha256 \"$SHA\"/" Casks/morphlo.rb
+# 4) Keep the cask in sync (not for betas)
+[ -n "${BETA:-}" ] || sed -i '' -e "s/^  version \".*\"/  version \"$VERSION\"/" -e "s/^  sha256 \".*\"/  sha256 \"$SHA\"/" Casks/morphlo.rb
 
 cat <<EOF
 

@@ -586,6 +586,8 @@ enum Thumbs {
 
     static func load(_ url: URL, completion: @escaping (NSImage) -> Void) {
         if let img = cache[url] { completion(img); return }
+        // Only media/PDF go through QuickLook; documents just use their Finder icon.
+        guard let type = url.contentType, type.conforms(to: .image) || type.conforms(to: .movie) || type.conforms(to: .pdf) else { return }
         let request = QLThumbnailGenerator.Request(fileAt: url, size: CGSize(width: 128, height: 128),
                                                    scale: NSScreen.main?.backingScaleFactor ?? 2,
                                                    representationTypes: .thumbnail)

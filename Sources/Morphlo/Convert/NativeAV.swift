@@ -10,7 +10,8 @@ enum NativeAV {
 
     static func convert(_ input: URL, to t: Target, runner: Runner,
                         progress: @escaping @Sendable (Double) -> Void) async throws -> [URL] {
-        let asset = AVURLAsset(url: input)
+        // Local-only: forbid reference movies that point at other (e.g. remote) media.
+        let asset = AVURLAsset(url: input, options: [AVURLAssetReferenceRestrictionsKey: AVAssetReferenceRestrictions.forbidAll.rawValue])
         let unreadable = FormatError("macOS can't read .\(input.pathExtension.lowercased()) files")
         let hasVideo: Bool, hasAudio: Bool
         do {

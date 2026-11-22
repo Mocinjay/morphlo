@@ -34,7 +34,7 @@ enum DocConv {
             if Markdown.isMarkdown(input), t.ext == "html" {
                 try FileManager.default.copyItem(at: src.url, to: out)
             } else {
-                var args = ["-convert", t.ext]
+                var args = ["-noload", "-convert", t.ext] // Morphlo: never fetch remote resources referenced by HTML
                 if !textutilInputs.contains(src.url.pathExtension.lowercased()) {
                     args += ["-format", "txt", "-inputencoding", "UTF-8"]
                 }

@@ -17,7 +17,7 @@ struct StoppedError: LocalizedError {
 /// The command-line tools Convert uses when they're installed. They're looked up on every use,
 /// so installing ffmpeg or cwebp while Convert is open takes effect without a restart.
 enum Tools {
-    static let directories = ["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin"]
+    static let directories = ["/usr/bin"] // Morphlo: macOS's own tools only
 
     static func find(_ name: String, in directories: [String] = Tools.directories) -> String? {
         for dir in directories {

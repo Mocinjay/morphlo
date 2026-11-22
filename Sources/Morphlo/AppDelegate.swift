@@ -1,4 +1,5 @@
 import AppKit
+import UniformTypeIdentifiers
 import Carbon
 import ServiceManagement
 import ApplicationServices
@@ -60,7 +61,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         clipboard.start()
 
         // Convert wheel entry points: Finder right-click service, ⌥⌘K, files opened with the app.
-        DropDisc.shared.onPickFiles = { [weak self] in self?.convertFilePicker() }
+        DropDisc.shared.onPickFiles = { [weak self] kind in self?.pickFiles(of: kind) }
         NSApp.servicesProvider = self
         NSUpdateDynamicServices()
         convertHotKey = HotKey(keyCode: kVK_ANSI_K, modifiers: cmdKey | optionKey) { [weak self] in self?.convertSelection() }
@@ -220,7 +221,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
 
     private var picking = false
 
-    @objc private func convertFilePicker() {
+    @objc private func convertFilePicker() { pickFiles(of: nil) }
+
+    /// File picker, optionally limited to one kind (from a drop-disc section).
+    private func pickFiles(of kind: MediaKind?) {
         guard !picking else { return }
         picking = true
         defer { picking = false }
@@ -229,7 +233,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = true
         panel.canChooseDirectories = false
-        panel.message = "Choose files to convert"
+        panel.message = kind.map { "Choose \($0.noun.lowercased()) files to convert" } ?? "Choose files to convert"
+        if let kind {
+            let ids = FileTypes.accepted.first { $0.kind == kind }?.identifiers ?? []
+            panel.allowedContentTypes = ids.compactMap { UTType($0) }
+        }
         panel.prompt = "Convert…"
         guard panel.runModal() == .OK, !panel.urls.isEmpty else {
             if previous?.bundleIdentifier != Bundle.main.bundleIdentifier { previous?.activate() }

@@ -1,4 +1,5 @@
 import AppKit
+import UniformTypeIdentifiers
 
 /// The round drop zone that opens under the menu-bar icon. Drop files (from Finder or straight
 /// from Photos) and the convert wheel takes over in the same spot. Click it to pick files instead.
@@ -6,7 +7,7 @@ import AppKit
 final class DropDisc {
     static let shared = DropDisc()
     private var panel: DropDiscPanel?
-    var onPickFiles: (() -> Void)?
+    var onPickFiles: ((MediaKind?) -> Void)?
 
     var isVisible: Bool { panel?.isVisible ?? false }
 
@@ -14,9 +15,9 @@ final class DropDisc {
         if let p = panel, p.isVisible { p.close(); return }
         let p = DropDiscPanel()
         p.onClose = { [weak self] in self?.panel = nil }
-        p.disc.onPick = { [weak self, weak p] in
+        p.disc.onPick = { [weak self, weak p] kind in
             p?.close()
-            self?.onPickFiles?()
+            self?.onPickFiles?(kind)
         }
         p.disc.onFiles = { [weak p] urls, center in
             p?.close()
@@ -119,17 +120,25 @@ final class DropDiscPanel: NSPanel {
 @MainActor
 final class DropDiscView: NSView {
     var onFiles: (([URL], NSPoint) -> Void)?
-    var onPick: (() -> Void)?
+    var onPick: ((MediaKind?) -> Void)?
     private(set) var isTargeted = false { didSet { needsDisplay = true } }
-    private var hovering = false { didSet { needsDisplay = true } }
+    private var hoverIndex: Int? { didSet { if hoverIndex != oldValue { needsDisplay = true } } }
+    private var hoverHub = false { didSet { if hoverHub != oldValue { needsDisplay = true } } }
+    private var dragKind: MediaKind? { didSet { needsDisplay = true } }
     private var loading = false { didSet { needsDisplay = true } }
 
-    private let outerR: CGFloat = 118, bandInnerR: CGFloat = 92, innerR: CGFloat = 84
+    // Same proportions and palette as the convert wheel / radial menu.
+    private let outerR: CGFloat = 118, bandInnerR: CGFloat = 66, hubR: CGFloat = 58
+    private let slots: [(MediaKind, String, String)] = [
+        (.image, "photo", "Images"), (.video, "film", "Video"), (.audio, "waveform", "Audio"),
+        (.document, "doc.text", "Documents"), (.pdf, "doc.richtext", "PDF"), (.font, "textformat", "Fonts"),
+    ]
 
     override init(frame: NSRect) {
         super.init(frame: frame)
         registerForDraggedTypes(DropIntake.acceptedTypes)
-        addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect], owner: self, userInfo: nil))
+        addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseMoved, .mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+                                       owner: self, userInfo: nil))
     }
 
     required init?(coder: NSCoder) { fatalError() }
@@ -140,71 +149,109 @@ final class DropDiscView: NSView {
     private var c: NSPoint { NSPoint(x: bounds.midX, y: bounds.midY) }
     private func circle(_ r: CGFloat) -> NSBezierPath { NSBezierPath(ovalIn: NSRect(x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r)) }
 
-    // Same neutral palette as the convert wheel.
     private static func n(_ v: CGFloat) -> NSColor { NSColor(srgbRed: v, green: v, blue: v, alpha: 1) }
     private static let n950 = n(0.039), n800 = n(0.149), n700 = n(0.251), n600 = n(0.322), n400 = n(0.639), n50 = n(0.98)
 
-    override func draw(_ dirtyRect: NSRect) {
-        let hot = isTargeted || hovering
-        // One constant disc: outer band, thin groove, inner drop well.
-        Self.n950.setFill(); circle(outerR).fill()
-        let band = circle(outerR)
-        band.append(circle(bandInnerR).reversed)
-        (isTargeted ? Self.n700 : Self.n800).setFill(); band.fill()
-        Self.n600.setStroke(); band.lineWidth = 1; band.stroke()
-
-        let well = circle(innerR)
-        (hot ? Self.n800 : Self.n950).setFill(); well.fill()
-        let dash = circle(innerR - 12)
-        dash.lineWidth = 1.5
-        dash.setLineDash([5, 5], count: 2, phase: 0)
-        (isTargeted ? Self.n400 : Self.n600).setStroke()
-        dash.stroke()
-
-        let title: String, sub: String
-        if loading { title = "Getting file…"; sub = "from Photos" }
-        else if isTargeted { title = "Release to convert"; sub = "" }
-        else { title = "Drop a file"; sub = "or click to choose" }
-        let ta: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 15, weight: .semibold),
-                                                 .foregroundColor: hot ? Self.n50 : Self.n400]
-        let sa: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 11, weight: .regular),
-                                                 .foregroundColor: Self.n600.blended(withFraction: 0.4, of: Self.n400) ?? Self.n600]
-        let ts = (title as NSString).size(withAttributes: ta)
-        let ss = (sub as NSString).size(withAttributes: sa)
-        let total = ts.height + (sub.isEmpty ? 0 : ss.height + 2)
-        let top = c.y + total / 2
-        (title as NSString).draw(at: NSPoint(x: c.x - ts.width / 2, y: top - ts.height), withAttributes: ta)
-        if !sub.isEmpty { (sub as NSString).draw(at: NSPoint(x: c.x - ss.width / 2, y: top - ts.height - ss.height - 2), withAttributes: sa) }
-
-        // Ring label, like an engraved bezel.
-        let label = "MORPHLO" as NSString
-        let la: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 8.5, weight: .semibold), .kern: 2.2,
-                                                 .foregroundColor: Self.n600.blended(withFraction: 0.3, of: Self.n400) ?? Self.n600]
-        let ls = label.size(withAttributes: la)
-        label.draw(at: NSPoint(x: c.x - ls.width / 2, y: c.y - (bandInnerR + outerR) / 2 - ls.height / 2), withAttributes: la)
+    private func wedge(_ i: Int) -> NSBezierPath {
+        let step = 360 / CGFloat(slots.count)
+        let a0 = 90 + step / 2 - CGFloat(i) * step, a1 = a0 - step // slot 0 centered at the top
+        let p = NSBezierPath()
+        p.appendArc(withCenter: c, radius: outerR, startAngle: a0, endAngle: a1, clockwise: true)
+        p.appendArc(withCenter: c, radius: bandInnerR, startAngle: a1, endAngle: a0, clockwise: false)
+        p.close()
+        return p
     }
 
-    private func inDisc(_ p: NSPoint) -> Bool { hypot(p.x - c.x, p.y - c.y) <= outerR }
+    private func index(at p: NSPoint) -> Int? {
+        let r = hypot(p.x - c.x, p.y - c.y)
+        guard r > bandInnerR, r < outerR else { return nil }
+        let step = 360 / CGFloat(slots.count)
+        var off = (90 + step / 2 - atan2(p.y - c.y, p.x - c.x) * 180 / .pi).truncatingRemainder(dividingBy: 360)
+        if off < 0 { off += 360 }
+        return min(slots.count - 1, Int(off / step))
+    }
 
-    override func mouseEntered(with event: NSEvent) { hovering = true }
-    override func mouseExited(with event: NSEvent) { hovering = false }
+    override func draw(_ dirtyRect: NSRect) {
+        Self.n950.setFill(); circle(outerR).fill() // one constant disc
+
+        for (i, slot) in slots.enumerated() {
+            let lit = (isTargeted && (dragKind == nil || dragKind == slot.0)) || hoverIndex == i
+            let path = wedge(i)
+            (lit ? Self.n700 : Self.n800).setFill(); path.fill()
+            Self.n600.setStroke(); path.lineWidth = 1; path.stroke()
+            let step = 360 / CGFloat(slots.count)
+            let mid = (90 - CGFloat(i) * step) * .pi / 180
+            let ir = (bandInnerR + outerR) / 2
+            let ic = NSPoint(x: c.x + cos(mid) * ir, y: c.y + sin(mid) * ir)
+            if let img = NSImage(systemSymbolName: slot.1, accessibilityDescription: slot.2)?
+                .withSymbolConfiguration(.init(pointSize: 16, weight: .regular)) {
+                let tint = lit ? Self.n50 : Self.n400
+                let t = NSImage(size: img.size, flipped: false) { r in img.draw(in: r); tint.set(); r.fill(using: .sourceAtop); return true }
+                t.draw(in: NSRect(x: ic.x - img.size.width / 2, y: ic.y - img.size.height / 2, width: img.size.width, height: img.size.height))
+            }
+        }
+
+        // Center: dark well with a hairline rim and the small ring dot, like the radial menu.
+        let hub = circle(hubR)
+        Self.n950.setFill(); hub.fill()
+        hub.lineWidth = 1
+        Self.n600.withAlphaComponent(0.7).setStroke(); hub.stroke()
+
+        let text: String? = loading ? "Getting file…"
+            : isTargeted ? "Release to convert"
+            : hoverIndex.map { slots[$0].2 }
+            ?? (hoverHub ? "Choose a file" : "Drop to convert")
+        let dotY = c.y + 9
+        let dot = NSBezierPath(ovalIn: NSRect(x: c.x - 3, y: dotY - 3, width: 6, height: 6))
+        dot.lineWidth = 1
+        (isTargeted ? Self.n400 : Self.n600).setStroke(); dot.stroke()
+        if let text {
+            let a: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 11, weight: .medium),
+                                                    .foregroundColor: (isTargeted || hoverHub || hoverIndex != nil) ? Self.n50 : Self.n400]
+            let sz = (text as NSString).size(withAttributes: a)
+            (text as NSString).draw(at: NSPoint(x: c.x - sz.width / 2, y: c.y - 12), withAttributes: a)
+        }
+    }
+
+    // MARK: Mouse
+
+    override func mouseMoved(with event: NSEvent) {
+        let p = convert(event.locationInWindow, from: nil)
+        hoverIndex = index(at: p)
+        hoverHub = hypot(p.x - c.x, p.y - c.y) <= hubR
+    }
+    override func mouseExited(with event: NSEvent) { hoverIndex = nil; hoverHub = false }
 
     override func mouseUp(with event: NSEvent) {
         let p = convert(event.locationInWindow, from: nil)
-        if inDisc(p) { onPick?() } else { window?.close() }
+        if let i = index(at: p) { onPick?(slots[i].0) }           // a section: pick that kind of file
+        else if hypot(p.x - c.x, p.y - c.y) <= hubR { onPick?(nil) } // center: pick anything
+        else { window?.close() }
     }
 
     // MARK: Drop destination
 
+    private func kind(of pb: NSPasteboard) -> MediaKind? {
+        if let url = DropIntake.fileURLs(pb).first { return MediaKind.of(url) }
+        let types = pb.types ?? []
+        if types.contains(.heic) || types.contains(.png) || types.contains(.tiff) { return .image }
+        if let r = (pb.readObjects(forClasses: [NSFilePromiseReceiver.self]) as? [NSFilePromiseReceiver])?.first,
+           let t = r.fileTypes.first.flatMap({ UTType($0) }) {
+            return t.conforms(to: .movie) ? .video : t.conforms(to: .image) ? .image : nil
+        }
+        return nil
+    }
+
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
         if sender.draggingPasteboard.types?.contains(.morphloMarker) == true { return [] }
+        dragKind = kind(of: sender.draggingPasteboard)
         isTargeted = true
         return .copy
     }
     override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
         sender.draggingPasteboard.types?.contains(.morphloMarker) == true ? [] : .copy
     }
-    override func draggingExited(_ sender: NSDraggingInfo?) { isTargeted = false }
+    override func draggingExited(_ sender: NSDraggingInfo?) { isTargeted = false; dragKind = nil }
     override func prepareForDragOperation(_ sender: NSDraggingInfo) -> Bool { true }
 
     override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {

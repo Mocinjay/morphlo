@@ -113,7 +113,7 @@ enum ImageConv {
     }
 
     static func writeWebP(_ image: CGImage, to out: URL, quality: Double) throws {
-        guard let cwebp = Tools.cwebp else { throw FormatError("WebP needs cwebp: brew install webp") }
+        guard let cwebp = Tools.cwebp else { throw FormatError("WebP isn't available: macOS can't write WebP by itself") }
         let tmp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".png")
         defer { try? FileManager.default.removeItem(at: tmp) }
         try write(image, to: tmp, type: .png, label: "PNG", props: [:])
