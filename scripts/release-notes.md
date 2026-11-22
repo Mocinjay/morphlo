@@ -8,6 +8,9 @@ Morphlo is a free menu-bar app for your Mac:
   - Or right-click a file in Finder → **Convert with Morphlo**.
   - Or select a file and press **⌥⌘K**.
 
+### New in 0.1.3
+- **100% local by default.** Morphlo no longer asks Photos to fetch originals from iCloud unless you turn it on (right-click 🦋 → "Get originals from iCloud Photos when needed"). Out of the box, nothing ever touches the network.
+
 ### New in 0.1.2
 - **Drags out of the Dock now get fixed automatically too.** Drag a HEIC out of your Downloads stack (or any file kept in the Dock) into Claude, ChatGPT or any website, and it arrives as a JPEG, just like drags from Finder and Photos.
 - **Your originals stay put where they should.** Dropping a photo on the Desktop, the Trash or a Finder-type app icon in the Dock moves or trashes the real file, never Morphlo's converted copy. Dropping onto Claude's or a browser's Dock icon still gets the JPEG.
@@ -28,6 +31,6 @@ Pick one:
 On first launch, allow **Photos** access (Full Access). Morphlo needs it to grab your originals.
 
 ### Private by design
-Everything runs on your Mac with built-in macOS frameworks. Morphlo never connects to the internet. It has no accounts and no analytics, and you don't need to install anything else.
+Everything runs on your Mac with built-in macOS frameworks. Morphlo never connects to the internet, and fetching originals from iCloud is off unless you switch it on. It has no accounts and no analytics, and you don't need to install anything else.
 
 Requires macOS 14 Sonoma or later (Apple Silicon or Intel).

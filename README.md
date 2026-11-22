@@ -13,7 +13,7 @@ Morphlo is a free, open-source menu-bar app for macOS. It does two things:
    With Morphlo running, you just drag as usual. The file that lands is a full-quality JPEG, or the real video.
 2. **Converts any file to any format, with a wheel.** Click a file and a ring of every format it can become pops up around your cursor. Pick one; the converted file appears next to the original.
 
-Everything runs on your Mac with built-in macOS frameworks. Nothing is uploaded, there are no analytics or accounts, and there are no extra tools to install. The only time anything is downloaded is when a photo or video you drag lives only in your iCloud Photos library: macOS fetches your original from iCloud, just like Photos does when you drag to Finder. You can turn that off in settings.
+Everything runs on your Mac with built-in macOS frameworks. Nothing is uploaded, there are no analytics or accounts, and there are no extra tools to install. Morphlo never touches the network. If you use iCloud Photos with "Optimize Mac Storage", you can optionally let macOS fetch originals that live only in your iCloud (right-click 🦋 → "Get originals from iCloud Photos when needed"). It's off by default.
 
 ## The convert wheel
 
@@ -42,7 +42,7 @@ Photos doesn't hand over real files when you drag. It hands over **file promises
 
 Every drag out of Photos also carries the item's library ID. The moment a drag starts, Morphlo:
 
-1. fetches the full original through Apple's Photos API (downloading from iCloud if needed);
+1. fetches the full original from your library through Apple's Photos API;
 2. converts it: HEIC becomes JPEG, a video stays the real file;
 3. swaps the fixed file into the drag once the cursor leaves Photos, before the destination reads it.
 
@@ -53,7 +53,7 @@ A photo is usually ready in 0.1–0.3 s, well before your cursor reaches the oth
 - **Everything else:** a JPEG for photos, the real video for videos.
 - **Inside Photos** (e.g. dragging into an album): never touched.
 
-If an original isn't ready in time (a large video still downloading from iCloud), Morphlo's shelf pops up so you can drop there instead.
+If an original is only in iCloud and iCloud fetching is off, or it isn't ready in time, the drag carries what Photos itself provides.
 
 ## Install
 

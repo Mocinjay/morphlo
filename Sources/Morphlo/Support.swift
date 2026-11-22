@@ -33,7 +33,7 @@ enum Settings {
             "autoFix": true,
             "replaceOriginal": false,
             "videoForAI": VideoForAI.video.rawValue, // Claude & co accept video now
-            "useICloudOriginals": true,
+            "useICloudOriginals": false, // 100% local by default
         ])
     }
 
