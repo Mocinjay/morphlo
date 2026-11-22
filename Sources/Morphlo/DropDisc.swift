@@ -31,6 +31,7 @@ final class DropDisc {
 
     /// Opens the disc centered on a point (the cursor), e.g. from a shortcut or mid-drag.
     func show(at point: NSPoint, duringDrag: Bool) {
+        Log.write("Drop disc: show at \(Int(point.x)),\(Int(point.y)) duringDrag=\(duringDrag) alreadyVisible=\(panel?.isVisible ?? false)")
         if let p = panel, p.isVisible {
             if duringDrag { return } // already up for this drag
             p.close()

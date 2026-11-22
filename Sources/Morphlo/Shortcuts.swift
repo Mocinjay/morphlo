@@ -97,16 +97,23 @@ final class DragTriggerDetector {
 
     func reset() { heldSince = nil; fired = false; sawOnlyTrigger = false }
 
+    /// Modifier keys physically held right now. Reads the hardware (HID) state directly, which
+    /// stays accurate while another app owns the drag; AppKit's view is unioned in as a backup.
+    static var heldModifiers: NSEvent.ModifierFlags {
+        let hid = NSEvent.ModifierFlags(rawValue: UInt(CGEventSource.flagsState(.hidSystemState).rawValue))
+        return hid.union(NSEvent.modifierFlags).intersection(KeyCombo.relevant)
+    }
+
     /// Call every drag tick. Returns true once per drag when the trigger fires.
     func tick() -> Bool {
         let trigger = Settings.dragTrigger.flags
         guard !trigger.isEmpty, !fired else { return false }
-        let held = NSEvent.modifierFlags.intersection(KeyCombo.relevant)
+        let held = Self.heldModifiers
         if held == trigger {
             if heldSince == nil { heldSince = Date(); sawOnlyTrigger = true }
-            if let t = heldSince, Date().timeIntervalSince(t) >= 0.07 { fired = true; return true }
+            if let t = heldSince, Date().timeIntervalSince(t) >= 0.07 { fired = true; Log.write("Drag trigger: fired (held)"); return true }
         } else if held.isEmpty {
-            if sawOnlyTrigger { fired = true; return true } // a quick tap
+            if sawOnlyTrigger { fired = true; Log.write("Drag trigger: fired (tap)"); return true } // a quick tap
             heldSince = nil
         } else {
             heldSince = nil
