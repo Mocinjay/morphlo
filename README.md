@@ -13,7 +13,7 @@ Morphlo is a free, open-source menu-bar app for macOS. It does two things:
    With Morphlo running, you just drag as usual. The file that lands is a full-quality JPEG, or the real video.
 2. **Converts any file to any format, with a wheel.** Click a file and a ring of every format it can become pops up around your cursor. Pick one; the converted file appears next to the original.
 
-Everything runs on your Mac with built-in macOS frameworks. Nothing is uploaded, there are no analytics or accounts, and there are no extra tools to install.
+Everything runs on your Mac with built-in macOS frameworks. Nothing is uploaded, there are no analytics or accounts, and there are no extra tools to install. The only time anything is downloaded is when a photo or video you drag lives only in your iCloud Photos library: macOS fetches your original from iCloud, just like Photos does when you drag to Finder. You can turn that off in settings.
 
 ## The convert wheel
 
@@ -49,7 +49,7 @@ Every drag out of Photos also carries the item's library ID. The moment a drag s
 A photo is usually ready in 0.1–0.3 s, well before your cursor reaches the other window. Each destination gets what suits it:
 
 - **Finder, Mail, Messages, Notes:** the untouched original (they already handle Photos correctly).
-- **AI chats (Claude, ChatGPT, Gemini…):** for video, a contact sheet plus frames, since they can't play video. Switch to "send the video file" in settings if you prefer.
+- **AI chats (Claude, ChatGPT, Gemini…):** the real video, or a contact sheet plus frames if you switch that on in settings.
 - **Everything else:** a JPEG for photos, the real video for videos.
 - **Inside Photos** (e.g. dragging into an album): never touched.
 

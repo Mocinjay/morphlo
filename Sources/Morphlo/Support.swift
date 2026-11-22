@@ -22,7 +22,7 @@ enum Settings {
 
     static func registerDefaults() {
         d.register(defaults: [
-            "showShelfOnDrag": true,
+            "showShelfOnDrag": false, // fully automatic: no pop-ups
             "fixClipboardImages": true,
             "convertCopiedFiles": false,
             "videoOutput": VideoOutput.sheetAndFrames.rawValue,
@@ -32,7 +32,8 @@ enum Settings {
             "jpegQuality": 0.85,
             "autoFix": true,
             "replaceOriginal": false,
-            "videoForAI": VideoForAI.frames.rawValue,
+            "videoForAI": VideoForAI.video.rawValue, // Claude & co accept video now
+            "useICloudOriginals": true,
         ])
     }
 
@@ -79,6 +80,12 @@ enum Settings {
     static var autoFix: Bool {
         get { d.bool(forKey: "autoFix") }
         set { d.set(newValue, forKey: "autoFix") }
+    }
+    /// Let macOS fetch originals that only live in your iCloud Photos library (your own data, via
+    /// Photos — the same download Photos does when you drag to Finder). Off = this Mac only.
+    static var useICloudOriginals: Bool {
+        get { d.bool(forKey: "useICloudOriginals") }
+        set { d.set(newValue, forKey: "useICloudOriginals") }
     }
     static var videoForAI: VideoForAI {
         get { VideoForAI(rawValue: d.string(forKey: "videoForAI") ?? "") ?? .frames }

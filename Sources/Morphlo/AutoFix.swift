@@ -144,36 +144,41 @@ enum PhotoLibrary {
 
     enum Kind { case photo, video }
 
-    /// Writes the asset's current version (edits included) at full quality into `dir`.
-    /// Downloads from iCloud if needed.
-    static func exportOriginal(localIdentifier: String, to dir: URL) async throws -> (URL, Kind) {
-        guard let asset = PHAsset.fetchAssets(withLocalIdentifiers: [localIdentifier], options: nil).firstObject else {
-            throw ConvertError.unreadable("Photos item")
-        }
+    struct Plan {
+        let resource: PHAssetResource
+        let kind: Kind
+        let base: String
+        let ext: String
+    }
+
+    /// Instant (metadata only): which file a drag will need, and what it's called.
+    static func plan(localIdentifier: String) -> Plan? {
+        guard let asset = PHAsset.fetchAssets(withLocalIdentifiers: [localIdentifier], options: nil).firstObject else { return nil }
         let resources = PHAssetResource.assetResources(for: asset)
         let isVideo = asset.mediaType == .video
         let preferred: [PHAssetResourceType] = isVideo ? [.fullSizeVideo, .video] : [.fullSizePhoto, .photo, .alternatePhoto]
-        guard let resource = preferred.lazy.compactMap({ t in resources.first { $0.type == t } }).first else {
-            throw ConvertError.unreadable("Photos item")
-        }
+        guard let resource = preferred.lazy.compactMap({ t in resources.first { $0.type == t } }).first else { return nil }
         // Name it after the original (an edited resource is called "FullSizeRender").
         let original = resources.first { $0.type == (isVideo ? .video : .photo) } ?? resource
         let base = (original.originalFilename as NSString).deletingPathExtension
-        let ext = (resource.originalFilename as NSString).pathExtension
-        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let out = dir.appendingPathComponent(base).appendingPathExtension(ext.isEmpty ? (isVideo ? "mov" : "jpg") : ext)
-        try? FileManager.default.removeItem(at: out) // writeData refuses to overwrite
+        var ext = (resource.originalFilename as NSString).pathExtension
+        if ext.isEmpty { ext = isVideo ? "mov" : "jpg" }
+        return Plan(resource: resource, kind: isVideo ? .video : .photo, base: base, ext: ext)
+    }
 
+    /// Writes the asset's current version (edits included) at full quality to `url` (must not exist).
+    /// If the original only lives in iCloud, macOS downloads it from the user's own iCloud Photos
+    /// library (the same thing Photos does when you drag to Finder), unless that's turned off.
+    static func write(_ plan: Plan, to url: URL) async throws {
+        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try? FileManager.default.removeItem(at: url) // writeData refuses to overwrite
         let options = PHAssetResourceRequestOptions()
-        // Morphlo never goes online itself. An original that only lives in iCloud fails here, and
-        // the shelf takes over (Photos fulfils the drag's promise, downloading it if needed).
-        options.isNetworkAccessAllowed = false
+        options.isNetworkAccessAllowed = Settings.useICloudOriginals
         try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
-            PHAssetResourceManager.default().writeData(for: resource, toFile: out, options: options) { error in
+            PHAssetResourceManager.default().writeData(for: plan.resource, toFile: url, options: options) { error in
                 if let error { c.resume(throwing: error) } else { c.resume() }
             }
         }
-        return (out, isVideo ? .video : .photo)
     }
 }
 
@@ -184,86 +189,156 @@ extension NSPasteboard.PasteboardType {
     static let autoFixMarker = NSPasteboard.PasteboardType("io.github.mocinjay.morphlo.autofix")
 }
 
-/// Handles one drag that started in Photos: fetches the originals as soon as the drag begins,
-/// converts them, and swaps the drag's contents as soon as the cursor leaves Photos, so the
-/// destination reads fixed files when the cursor enters it.
+/// Fixes drags in flight, with no UI. As soon as a drag starts (from Photos, or files like HEIC
+/// from Finder), Morphlo decides the final file names and creates them as placeholders. The moment
+/// the drag leaves its source window it swaps those paths into the drag — so the destination
+/// (which reads the paths when the cursor enters it) always sees the fixed files — and fills them
+/// in while you're still moving. Photos and Finder themselves get the untouched originals.
 @MainActor
 final class AutoFix {
-    struct Prepared {
+    struct Item {
         let kind: PhotoLibrary.Kind
-        let original: URL      // full-quality original, for apps that handle originals fine
-        let converted: URL     // JPEG for photos, the real video for videos
-        let frames: [URL]      // videos only: contact sheet + frames, for AI chats
+        let original: URL   // full-quality original (for Finder, Mail…)
+        let converted: URL  // what browsers, Electron apps and AI chats get
     }
 
     enum Payload: Equatable { case originals, converted, forAI }
 
     private final class Session {
-        let ids: [String]
+        let fromPhotos: Bool
         let workDir = WorkDir.make()
-        var prepared: [Prepared]?
+        var items: [Item] = []
+        var frames: [URL] = []           // optional AI mode for videos
+        var ready = false
         var failed = false
         var payload: Payload?
         var assetRefs: [Data] = []
-        var leftPhotosAt: Date?
-        var fellBack = false
+        var sourceURLs: [URL] = []       // what the drag carried before we touched it
         var task: Task<Void, Never>?
-        init(ids: [String]) { self.ids = ids }
+        init(fromPhotos: Bool) { self.fromPhotos = fromPhotos }
     }
 
     private var session: Session?
     private let pb = NSPasteboard(name: .drag)
     var onOwnWrite: (() -> Void)?
-    var onFallback: (() -> Void)?
 
     static var isEnabled: Bool { Settings.autoFix && PhotoLibrary.canRead }
 
-    /// Returns true if this drag is being handled (so the shelf shouldn't pop up yet).
+    /// Returns true if this drag is being handled.
     func dragStarted(_ pasteboard: NSPasteboard) -> Bool {
         let types = pasteboard.types ?? []
-        guard !types.contains(.morphloMarker), !types.contains(.autoFixMarker) else { return false }
+        guard Settings.autoFix, !types.contains(.morphloMarker), !types.contains(.autoFixMarker) else { return false }
         let ids = PhotoLibrary.localIdentifiers(in: pasteboard)
-        guard !ids.isEmpty else { return false }
-        guard Self.isEnabled else {
-            Log.write("AutoFix: off (setting=\(Settings.autoFix), photos access=\(PhotoLibrary.status.rawValue))")
-            return false
+        if !ids.isEmpty {
+            guard PhotoLibrary.canRead else {
+                Log.write("AutoFix: Photos access not granted (status \(PhotoLibrary.status.rawValue))")
+                return false
+            }
+            return startPhotos(ids, pasteboard)
         }
-        let s = Session(ids: ids)
+        let urls = DropIntake.fileURLs(pasteboard)
+        guard !urls.isEmpty, urls.count <= 50,
+              urls.contains(where: { ImageConverter.needsConversion($0, maxEdge: ImageConverter.maxEdge) }) else { return false }
+        return startFiles(urls)
+    }
+
+    private func touch(_ url: URL) {
+        try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        FileManager.default.createFile(atPath: url.path, contents: nil)
+    }
+
+    /// Drag from Photos: plan names now (metadata only), create placeholders, fetch in the background.
+    private func startPhotos(_ ids: [String], _ pasteboard: NSPasteboard) -> Bool {
+        let plans = ids.map { PhotoLibrary.plan(localIdentifier: $0) }
+        guard plans.allSatisfy({ $0 != nil }) else { Log.write("AutoFix: some Photos items unavailable"); return false }
+        let s = Session(fromPhotos: true)
         s.assetRefs = (pasteboard.pasteboardItems ?? []).compactMap { $0.data(forType: PhotoLibrary.assetRefType) }
+        s.sourceURLs = DropIntake.fileURLs(pasteboard)
+        for (i, p) in plans.compactMap({ $0 }).enumerated() {
+            let dir = s.workDir.appendingPathComponent("item-\(i)")
+            let original = dir.appendingPathComponent("original").appendingPathComponent(p.base).appendingPathExtension(p.ext)
+            let converted = p.kind == .photo
+                ? dir.appendingPathComponent("out").appendingPathComponent(p.base).appendingPathExtension("jpg")
+                : original
+            touch(original)
+            if converted != original { touch(converted) }
+            s.items.append(Item(kind: p.kind, original: original, converted: converted))
+        }
         session = s
-        Log.write("AutoFix: drag of \(ids.count) item(s) from Photos, preparing")
+        Log.write("AutoFix: drag of \(ids.count) item(s) from Photos")
+        let items = s.items, workDir = s.workDir, wantFrames = Settings.videoForAI == .frames
         let started = Date()
+        let resolved = plans.compactMap { $0 }
         s.task = Task.detached(priority: .userInitiated) {
-            var results: [Prepared] = []
-            var failures = 0
-            for (i, id) in ids.enumerated() {
-                if Task.isCancelled { return }
-                do {
-                    let dir = s.workDir.appendingPathComponent("item-\(i)")
-                    let (original, kind) = try await PhotoLibrary.exportOriginal(localIdentifier: id, to: dir.appendingPathComponent("original"))
-                    let out = dir.appendingPathComponent("out")
-                    switch kind {
-                    case .photo:
-                        // Full resolution (within Claude's 8000px / 10 MB limits) — uploads elsewhere
-                        // shouldn't be downscaled.
-                        let jpeg = try ImageConverter.convert(original, outDir: out, maxEdge: ImageConverter.maxEdge)
-                        results.append(Prepared(kind: .photo, original: original, converted: jpeg, frames: []))
-                    case .video:
-                        let frames = (try? await VideoConverter.convert(original, outDir: out, transcribe: false)) ?? []
-                        results.append(Prepared(kind: .video, original: original, converted: original, frames: frames))
+            do {
+                var frames: [URL] = []
+                for (i, (plan, item)) in zip(resolved, items).enumerated() {
+                    try Task.checkCancellation()
+                    let tmp = workDir.appendingPathComponent("tmp-\(i)")
+                    let tmpOriginal = tmp.appendingPathComponent(item.original.lastPathComponent)
+                    try await PhotoLibrary.write(plan, to: tmpOriginal)
+                    if item.kind == .photo {
+                        // Full resolution (within 8000px / 10 MB) for uploads; HEIC & co become JPEG.
+                        var jpeg = try ImageConverter.convert(tmpOriginal, outDir: tmp.appendingPathComponent("out"), maxEdge: ImageConverter.maxEdge)
+                        if jpeg == tmpOriginal {
+                            let copy = tmp.appendingPathComponent("copy.jpg")
+                            try FileManager.default.copyItem(at: tmpOriginal, to: copy)
+                            jpeg = copy
+                        }
+                        _ = try FileManager.default.replaceItemAt(item.converted, withItemAt: jpeg)
                     }
-                } catch {
-                    failures += 1
-                    Log.write("AutoFix: couldn't prepare \(id): \(error.localizedDescription)")
+                    _ = try FileManager.default.replaceItemAt(item.original, withItemAt: tmpOriginal)
+                    if item.kind == .video, wantFrames {
+                        frames += (try? await VideoConverter.convert(item.original, outDir: tmp.appendingPathComponent("frames"), transcribe: false)) ?? []
+                    }
+                }
+                let elapsed = Date().timeIntervalSince(started)
+                let doneFrames = frames
+                await MainActor.run {
+                    s.frames = doneFrames
+                    s.ready = true
+                    Log.write(String(format: "AutoFix: originals ready in %.2fs", elapsed))
+                }
+            } catch {
+                await MainActor.run {
+                    s.failed = true
+                    Log.write("AutoFix: couldn't fetch from Photos: \(error.localizedDescription)")
+                    self.fallBackToSource(s)
                 }
             }
-            let elapsed = Date().timeIntervalSince(started)
-            let done = results
-            let anyFailed = failures > 0
-            await MainActor.run {
-                // All-or-nothing: never silently drop items from a multi-item drag.
-                if anyFailed || done.isEmpty { s.failed = true } else { s.prepared = done }
-                Log.write(String(format: "AutoFix: prepared %d/%d in %.2fs", done.count, ids.count, elapsed))
+        }
+        return true
+    }
+
+    /// Drag of files (e.g. HEIC from Finder): convert the ones apps can't read, keep the rest.
+    private func startFiles(_ urls: [URL]) -> Bool {
+        let s = Session(fromPhotos: false)
+        s.sourceURLs = urls
+        var jobs: [(URL, URL)] = []
+        for (i, url) in urls.enumerated() {
+            let needs = ImageConverter.needsConversion(url, maxEdge: ImageConverter.maxEdge)
+            let converted = needs
+                ? s.workDir.appendingPathComponent("item-\(i)").appendingPathComponent(url.baseName).appendingPathExtension("jpg")
+                : url
+            if needs { touch(converted); jobs.append((url, converted)) }
+            s.items.append(Item(kind: .photo, original: url, converted: converted))
+        }
+        session = s
+        Log.write("AutoFix: drag of \(urls.count) file(s), converting \(jobs.count)")
+        let workDir = s.workDir
+        s.task = Task.detached(priority: .userInitiated) {
+            do {
+                for (i, (src, dest)) in jobs.enumerated() {
+                    let jpeg = try ImageConverter.convert(src, outDir: workDir.appendingPathComponent("tmp-\(i)"), maxEdge: ImageConverter.maxEdge)
+                    _ = try FileManager.default.replaceItemAt(dest, withItemAt: jpeg)
+                }
+                await MainActor.run { s.ready = true; Log.write("AutoFix: files converted") }
+            } catch {
+                await MainActor.run {
+                    s.failed = true
+                    Log.write("AutoFix: couldn't convert: \(error.localizedDescription)")
+                    self.fallBackToSource(s)
+                }
             }
         }
         return true
@@ -271,64 +346,52 @@ final class AutoFix {
 
     /// Called every poll tick while the mouse button is held.
     func dragMoved(to point: NSPoint) {
-        guard let s = session else { return }
+        guard let s = session, !s.failed else { return }
         let dest = DestinationDetector.destination(at: point)
-
-        if case .photos = dest {
-            if s.payload != nil { restoreForPhotos(s) }
-            return
-        }
-        if s.leftPhotosAt == nil { s.leftPhotosAt = Date() }
-        if s.fellBack { return } // the shelf is handling this drag now
-
-        if s.failed {
-            fallBack(s, reason: "preparation failed")
-            return
-        }
-        guard let prepared = s.prepared else {
-            if let left = s.leftPhotosAt, Date().timeIntervalSince(left) > 0.35, dest.wantsSwap {
-                fallBack(s, reason: "not ready in time")
-            }
-            return
-        }
-        // Swap as early as possible (even over empty desktop), then only switch payloads.
-        let payload: Payload
         switch dest {
-        case .passthrough, .morphlo: payload = .originals // Finder & co. and our shelf want the real original
-        case .aiChat: payload = Settings.videoForAI == .frames ? .forAI : .converted
-        default: payload = .converted
+        case .photos where s.fromPhotos:
+            if s.payload != nil { restoreForPhotos(s) } // back inside Photos (e.g. into an album)
+            return
+        case .passthrough, .morphlo, .photos:
+            // Finder, Mail, our own disc… get the untouched originals — but only rewrite if we
+            // already swapped, so drags inside Finder are never touched.
+            if s.payload != nil, s.payload != .originals { write(s, .originals, dest) }
+            return
+        case .aiChat:
+            let frames = Settings.videoForAI == .frames && s.ready && !s.frames.isEmpty
+            let p: Payload = frames ? .forAI : .converted
+            if p != s.payload { write(s, p, dest) }
+        case .general, .nowhere:
+            if s.payload != .converted { write(s, .converted, dest) }
         }
-        if payload != s.payload { write(s, prepared, payload: payload, dest: dest) }
     }
 
     func dragEnded() {
         guard let s = session else { return }
         session = nil
+        if s.payload != nil && !s.ready && !s.failed { Log.write("AutoFix: dropped before the file finished (may arrive incomplete)") }
         Log.write("AutoFix: drag ended (payload \(String(describing: s.payload)))")
         if s.payload == nil {
-            // Never used (dragged within Photos, or fell back): stop work and clean up.
             s.task?.cancel()
             let dir = s.workDir
             DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 30) { try? FileManager.default.removeItem(at: dir) }
         }
     }
 
-    private func fallBack(_ s: Session, reason: String) {
-        guard !s.fellBack else { return }
-        s.fellBack = true
-        if s.payload != nil { restoreForPhotos(s) }
-        Log.write("AutoFix: \(reason), showing shelf")
-        onFallback?()
+    private func write(_ s: Session, _ payload: Payload, _ dest: Destination) {
+        let urls: [URL]
+        switch payload {
+        case .originals: urls = s.items.map(\.original)
+        case .converted: urls = s.items.map(\.converted)
+        case .forAI:
+            urls = s.items.flatMap { $0.kind == .video ? [] : [$0.converted] } + s.frames
+        }
+        put(urls)
+        s.payload = payload
+        Log.write("AutoFix: drag now carries \(payload) for \(dest) -> \(urls.map(\.lastPathComponent))")
     }
 
-    private func write(_ s: Session, _ prepared: [Prepared], payload: Payload, dest: Destination) {
-        let urls = prepared.flatMap { p -> [URL] in
-            switch payload {
-            case .originals: return [p.original]
-            case .converted: return [p.converted]
-            case .forAI: return p.kind == .video && !p.frames.isEmpty ? p.frames : [p.converted]
-            }
-        }
+    private func put(_ urls: [URL]) {
         pb.clearContents()
         pb.writeObjects(urls.map { url -> NSPasteboardItem in
             let item = NSPasteboardItem()
@@ -337,12 +400,23 @@ final class AutoFix {
             return item
         })
         onOwnWrite?()
-        s.payload = payload
-        Log.write("AutoFix: drag now carries \(payload) for \(dest) -> \(urls.map(\.lastPathComponent))")
+    }
+
+    /// If fetching/conversion fails after we swapped, put back what the drag originally carried.
+    private func fallBackToSource(_ s: Session) {
+        guard s.payload != nil, session === s else { return }
+        pb.clearContents()
+        pb.writeObjects(s.sourceURLs.enumerated().map { i, url -> NSPasteboardItem in
+            let item = NSPasteboardItem()
+            item.setString(url.absoluteString, forType: .fileURL)
+            if i < s.assetRefs.count { item.setData(s.assetRefs[i], forType: PhotoLibrary.assetRefType) }
+            return item
+        })
+        onOwnWrite?()
+        s.payload = nil
     }
 
     /// Back over Photos: put the asset references back so drops into albums keep working.
-    /// (Photos' file promises can't be recreated, so only the references go back.)
     private func restoreForPhotos(_ s: Session) {
         pb.clearContents()
         pb.writeObjects(s.assetRefs.map { ref in

@@ -38,7 +38,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         menu.delegate = self
 
         autoFix.onOwnWrite = { [weak self] in self?.dragWatcher.acknowledgeOwnWrite() }
-        autoFix.onFallback = { [weak self] in self?.shelf.showForDrag() }
         dragWatcher.onDragTick = { [weak self] point in self?.autoFix.dragMoved(to: point) }
         dragWatcher.onDragStart = { [weak self] pb in
             guard let self else { return }
@@ -92,10 +91,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         convertItem.keyEquivalentModifierMask = [.command, .option]
         menu.addItem(.separator())
 
-        add(menu, "Auto-fix drags from Photos (no shelf needed)", #selector(toggleAutoFix), on: Settings.autoFix)
+        add(menu, "Auto-fix drags (Photos & HEIC files) — no clicks", #selector(toggleAutoFix), on: Settings.autoFix)
         if Settings.autoFix && !PhotoLibrary.canRead {
             add(menu, "    ⚠︎ Allow Photos access to turn this on…", #selector(openPhotosPrivacy))
         }
+        add(menu, "Get originals from iCloud Photos when needed", #selector(toggleICloud), on: Settings.useICloudOriginals)
         add(menu, "Detect AI chats in browsers (needs Accessibility)", #selector(toggleAX), on: AXIsProcessTrusted())
         add(menu, "Pop up shelf when dragging photos & videos", #selector(toggleShowOnDrag), on: Settings.showShelfOnDrag)
         menu.addItem(.separator())
@@ -123,7 +123,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         video.addItem(.separator())
         add(video, "Transcribe audio (on-device)", #selector(toggleTranscribe), on: Settings.transcribe)
         video.addItem(.separator())
-        add(video, "Into AI chats: send frames (they can't play video)", #selector(setVideoForAIFrames), on: Settings.videoForAI == .frames)
+        add(video, "Into AI chats: send frames + contact sheet", #selector(setVideoForAIFrames), on: Settings.videoForAI == .frames)
         add(video, "Into AI chats: send the video file", #selector(setVideoForAIVideo), on: Settings.videoForAI == .video)
         menu.addItem(withTitle: "Videos", action: nil, keyEquivalent: "").submenu = video
 
@@ -167,6 +167,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
             _ = AXIsProcessTrustedWithOptions(opts)
         }
     }
+    @objc private func toggleICloud() { Settings.useICloudOriginals.toggle() }
     @objc private func setKeepOriginal() { Settings.replaceOriginal = false }
     @objc private func setReplaceOriginal() { Settings.replaceOriginal = true }
     @objc private func setVideoForAIFrames() { Settings.videoForAI = .frames }
