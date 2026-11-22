@@ -43,12 +43,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         dragWatcher.onDragTick = { [weak self] point in
             guard let self else { return }
             self.autoFix.dragMoved(to: point)
-            // Tap the trigger key (default ⇧) mid-drag: the drop disc pops up under the cursor.
-            if self.dragTrigger.tick() { DropDisc.shared.show(at: point, duringDrag: true) }
         }
+        // Tap the trigger key (default ⇧) mid-drag — any drag, even ones whose data Morphlo can't
+        // see — and the drop disc pops up under the cursor.
+        dragWatcher.onHoldStart = { [weak self] in self?.dragTrigger.reset() }
+        dragWatcher.onHoldTick = { [weak self] point in
+            if self?.dragTrigger.tick() == true { DropDisc.shared.show(at: point, duringDrag: true) }
+        }
+        dragWatcher.onHoldEnd = { DropDisc.shared.dragEnded() }
         dragWatcher.onDragStart = { [weak self] pb in
             guard let self else { return }
-            self.dragTrigger.reset()
             if self.autoFix.dragStarted(pb) { return } // zero-touch handles it; no shelf
             guard Settings.showShelfOnDrag else { return }
             let fromPhotos = NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.apple.Photos"
@@ -56,7 +60,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         }
         dragWatcher.onDragEnd = { [weak self] in
             self?.autoFix.dragEnded()
-            DropDisc.shared.dragEnded()
             self?.shelf.dragEnded()
         }
         if Settings.autoFix {

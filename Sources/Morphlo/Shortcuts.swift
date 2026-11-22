@@ -94,8 +94,14 @@ final class DragTriggerDetector {
     private var heldSince: Date?
     private var fired = false
     private var sawOnlyTrigger = false
+    private var armed = true
 
-    func reset() { heldSince = nil; fired = false; sawOnlyTrigger = false }
+    /// Called when the mouse goes down. If the trigger key was already held before the press
+    /// (e.g. ⇧-drag to extend a text selection), it doesn't count until it's let go.
+    func reset() {
+        heldSince = nil; fired = false; sawOnlyTrigger = false
+        armed = Self.heldModifiers.isEmpty
+    }
 
     /// Modifier keys physically held right now. Reads the hardware (HID) state directly, which
     /// stays accurate while another app owns the drag; AppKit's view is unioned in as a backup.
@@ -109,6 +115,7 @@ final class DragTriggerDetector {
         let trigger = Settings.dragTrigger.flags
         guard !trigger.isEmpty, !fired else { return false }
         let held = Self.heldModifiers
+        if !armed { if held.isEmpty { armed = true }; return false }
         if held == trigger {
             if heldSince == nil { heldSince = Date(); sawOnlyTrigger = true }
             if let t = heldSince, Date().timeIntervalSince(t) >= 0.07 { fired = true; Log.write("Drag trigger: fired (held)"); return true }

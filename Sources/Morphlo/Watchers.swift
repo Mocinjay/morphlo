@@ -8,6 +8,13 @@ final class DragWatcher {
     var onDragEnd: (() -> Void)?
     /// Cursor position (Cocoa screen coords) every poll while a drag is in progress.
     var onDragTick: ((NSPoint) -> Void)?
+    /// Any press-and-move gesture (including drags whose data Morphlo can't see, e.g. from Dock
+    /// stacks): ticks while the button is held after moving, so the Shift trigger works everywhere.
+    var onHoldTick: ((NSPoint) -> Void)?
+    var onHoldStart: (() -> Void)?
+    var onHoldEnd: (() -> Void)?
+    private var downAt: NSPoint = .zero
+    private var moved = false
 
     private let dragPasteboard = NSPasteboard(name: .drag)
     private var lastCount: Int
@@ -28,12 +35,18 @@ final class DragWatcher {
 
     private func beginPolling() {
         guard timer == nil else { return }
+        downAt = NSEvent.mouseLocation
+        moved = false
+        onHoldStart?()
         timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self else { return }
                 self.check()
-                if NSEvent.pressedMouseButtons & 1 == 0 { self.mouseReleased() }
-                else if self.dragging { self.onDragTick?(NSEvent.mouseLocation) }
+                if NSEvent.pressedMouseButtons & 1 == 0 { self.mouseReleased(); return }
+                let p = NSEvent.mouseLocation
+                if !self.moved, hypot(p.x - self.downAt.x, p.y - self.downAt.y) > 12 { self.moved = true }
+                if self.dragging { self.onDragTick?(p) }
+                if self.dragging || self.moved { self.onHoldTick?(p) }
             }
         }
     }
@@ -54,6 +67,7 @@ final class DragWatcher {
     private func mouseReleased() {
         timer?.invalidate()
         timer = nil
+        onHoldEnd?()
         if dragging {
             dragging = false
             onDragEnd?()
