@@ -24,7 +24,17 @@ final class DragWatcher {
 
     init() { lastCount = dragPasteboard.changeCount }
 
+    private var buttonPoller: Timer?
+
     func start() {
+        // macOS doesn't report every press to other apps (e.g. inside the Dock's stack pop-up),
+        // so also check the button state directly; cheap, and catches every drag.
+        buttonPoller = Timer.scheduledTimer(withTimeInterval: 1.0 / 30, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                if NSEvent.pressedMouseButtons & 1 == 1 { self?.beginPolling() }
+            }
+        }
+        buttonPoller?.tolerance = 0.01
         if let m = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown, handler: { [weak self] _ in
             MainActor.assumeIsolated { self?.beginPolling() }
         }) { monitors.append(m) }
@@ -44,7 +54,10 @@ final class DragWatcher {
                 self.check()
                 if NSEvent.pressedMouseButtons & 1 == 0 { self.mouseReleased(); return }
                 let p = NSEvent.mouseLocation
-                if !self.moved, hypot(p.x - self.downAt.x, p.y - self.downAt.y) > 12 { self.moved = true }
+                if !self.moved, hypot(p.x - self.downAt.x, p.y - self.downAt.y) > 12 {
+                    self.moved = true
+                    Log.write("Hold: press-and-move started (frontmost: \(NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? "?"))")
+                }
                 if self.dragging { self.onDragTick?(p) }
                 if self.dragging || self.moved { self.onHoldTick?(p) }
             }
