@@ -1,8 +1,8 @@
 # Lives in the tap repo github.com/Mocinjay/homebrew-tap as Casks/morphlo.rb.
 # Users install with:  brew tap mocinjay/tap && brew trust mocinjay/tap && brew install --cask morphlo
 cask "morphlo" do
-  version "0.1.0"
-  sha256 "d91557ae889338b0775651c6bc3efb99db84a85ce7060074e0c9c21adb74f2e5"
+  version "0.1.1"
+  sha256 "655afb175d4e3d91d9ae7edefe2db73534c229da1af2ba991981ddd385e02417"
 
   url "https://github.com/Mocinjay/morphlo/releases/download/v#{version}/Morphlo-#{version}.zip"
   name "Morphlo"
