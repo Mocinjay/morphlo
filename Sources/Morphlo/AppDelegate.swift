@@ -26,7 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = statusItem.button {
             button.image = MorphloIcon.menuBar()
-            button.toolTip = "Morphlo — drop photos & videos here"
+            button.toolTip = "Morphlo — click to convert a file, right-click for settings"
             button.target = self
             button.action = #selector(statusClicked(_:))
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
@@ -60,6 +60,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         clipboard.start()
 
         // Convert wheel entry points: Finder right-click service, ⌥⌘K, files opened with the app.
+        DropDisc.shared.onPickFiles = { [weak self] in self?.convertFilePicker() }
         NSApp.servicesProvider = self
         NSUpdateDynamicServices()
         convertHotKey = HotKey(keyCode: kVK_ANSI_K, modifiers: cmdKey | optionKey) { [weak self] in self?.convertSelection() }
@@ -78,7 +79,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
             statusItem.button?.performClick(nil)
             statusItem.menu = nil
         } else {
-            shelf.toggle()
+            // Left-click: the round drop zone. (The shelf lives in the right-click menu.)
+            DropDisc.shared.toggle(under: statusItem.button)
         }
     }
 

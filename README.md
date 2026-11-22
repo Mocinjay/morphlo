@@ -19,10 +19,11 @@ Everything runs on your Mac with built-in macOS frameworks. Nothing is uploaded,
 
 Open it any of these ways:
 
+- **Menu bar:** click the butterfly and a round drop zone opens under it. Drop any file (from Finder, or straight from Photos), or click it to choose.
 - **Finder:** right-click files → **Quick Actions** (or **Services**) → **Convert with Morphlo**
 - **Shortcut:** select files in Finder and press **⌥⌘K**
 - **Shelf:** click any file on Morphlo's shelf
-- **Menu bar:** Morphlo icon → **Convert a File…**, or drop files on Morphlo's app icon
+- Drop files on Morphlo's app icon, or right-click the menu-bar icon → **Convert a File…**
 
 | From | To |
 |---|---|
