@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     private var statusItem: NSStatusItem!
     private let shelf = ShelfController()
     private let dragWatcher = DragWatcher()
+    private lazy var sniffer = DragSniffer()
     private let clipboard = ClipboardWatcher()
     private let autoFix = AutoFix()
     private var convertHotKey: HotKey?
@@ -50,7 +51,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         dragWatcher.onHoldTick = { [weak self] point in
             if self?.dragTrigger.tick() == true { DropDisc.shared.show(at: point, duringDrag: true) }
         }
-        dragWatcher.onHoldEnd = { DropDisc.shared.dragEnded() }
+        dragWatcher.onHoldEnd = { [weak self] in
+            self?.sniffer.reset()
+            DropDisc.shared.dragEnded()
+        }
+        // Dock drags (Downloads stack etc.) hide their data; the sniffer finds it mid-drag.
+        dragWatcher.onHiddenDragTick = { [weak self] point in
+            guard Settings.autoFix else { return }
+            self?.sniffer.follow(point)
+        }
+        sniffer.onCatch = { [weak self] pb in self?.dragWatcher.adopt(pb) }
         dragWatcher.onDragStart = { [weak self] pb in
             guard let self else { return }
             if self.autoFix.dragStarted(pb) { return } // zero-touch handles it; no shelf

@@ -8,6 +8,11 @@ Morphlo is a free menu-bar app for your Mac:
   - Or right-click a file in Finder → **Convert with Morphlo**.
   - Or select a file and press **⌥⌘K**.
 
+### New in 0.1.2
+- **Drags out of the Dock now get fixed automatically too.** Drag a HEIC out of your Downloads stack (or any file kept in the Dock) into Claude, ChatGPT or any website, and it arrives as a JPEG, just like drags from Finder and Photos.
+- **Your originals stay put where they should.** Dropping a photo on the Desktop, the Trash or a Finder-type app icon in the Dock moves or trashes the real file, never Morphlo's converted copy. Dropping onto Claude's or a browser's Dock icon still gets the JPEG.
+- Works with an auto-hiding Dock and on multiple displays.
+
 ### New in 0.1.1
 - **Tap ⇧ Shift while dragging** any file and the drop disc pops up right under your cursor. You don't have to drag all the way to the menu bar. This works for every drag: Finder, Photos, and the Dock's Downloads stack.
 - **⌃⌥M** opens the drop disc wherever your cursor is. Change it under right-click 🦋 → **Shortcuts**.

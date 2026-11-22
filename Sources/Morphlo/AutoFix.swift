@@ -48,6 +48,10 @@ enum DestinationDetector {
     /// `point` is in Cocoa screen coordinates (origin bottom-left of the primary screen).
     static func destination(at point: NSPoint) -> Destination {
         guard let primary = NSScreen.screens.first else { return .nowhere }
+        // Over the Dock: the Trash, folders and Finder-like app icons get the untouched file
+        // (dropping a HEIC on the Trash must trash the HEIC, not Morphlo's JPEG copy); AI and
+        // browser icons are treated like their windows.
+        if let d = dockDestination(point) { return d }
         let cg = CGPoint(x: point.x, y: primary.frame.height - point.y)
         guard let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
                 as? [[String: Any]] else { return .nowhere }
@@ -65,7 +69,66 @@ enum DestinationDetector {
             let windowNumber = (w[kCGWindowNumber as String] as? Int) ?? 0
             return classify(bundle: bundle, pid: pid, window: windowNumber, bounds: bounds)
         }
-        return .nowhere
+        // No app window under the cursor: that's the Desktop, which is Finder. It gets the
+        // untouched originals, so dragging a HEIC to the Desktop moves the HEIC.
+        return .passthrough("com.apple.finder")
+    }
+
+    private static var dockFrameCache: (frame: CGRect?, at: Date)?
+    private static var dockItemCache: (point: CGPoint, dest: Destination, at: Date)?
+
+    /// What the Dock offers at this point (Cocoa coordinates), or nil when it isn't over the Dock.
+    /// Needs Accessibility; without it the Dock is classified like any other spot, as before.
+    static func dockDestination(_ point: NSPoint) -> Destination? {
+        guard AXIsProcessTrusted(), let primary = NSScreen.screens.first,
+              let dock = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.dock").first
+        else { return nil }
+        // The Dock moves (auto-hide, other display), so only trust a very fresh frame.
+        if dockFrameCache == nil || Date().timeIntervalSince(dockFrameCache!.at) > 0.25 {
+            dockFrameCache = (axDockFrame(pid: dock.processIdentifier), Date())
+        }
+        guard let f = dockFrameCache?.frame else { return nil }
+        let cocoa = CGRect(x: f.minX, y: primary.frame.height - f.maxY, width: f.width, height: f.height)
+        // A hidden Dock reports a frame past the screen edge; it isn't there to drop on.
+        guard NSScreen.screens.contains(where: { $0.frame.insetBy(dx: 1, dy: 1).intersects(cocoa) }),
+              cocoa.insetBy(dx: -2, dy: -2).contains(point) else { return nil }
+        let cg = CGPoint(x: point.x, y: primary.frame.height - point.y)
+        if let c = dockItemCache, hypot(c.point.x - cg.x, c.point.y - cg.y) < 4, Date().timeIntervalSince(c.at) < 0.5 {
+            return c.dest
+        }
+        var dest: Destination = .passthrough("com.apple.dock") // Trash, folders, files, gaps
+        let app = AXUIElementCreateApplication(dock.processIdentifier)
+        AXUIElementSetMessagingTimeout(app, 0.05)
+        var element: AXUIElement?
+        if AXUIElementCopyElementAtPosition(app, Float(cg.x), Float(cg.y), &element) == .success, let element {
+            var sub: CFTypeRef?, url: CFTypeRef?
+            AXUIElementCopyAttributeValue(element, kAXSubroleAttribute as CFString, &sub)
+            AXUIElementCopyAttributeValue(element, kAXURLAttribute as CFString, &url)
+            if (sub as? String) == "AXApplicationDockItem", let appURL = (url as? URL) ?? (url as? NSURL) as URL?,
+               let bundle = Bundle(url: appURL)?.bundleIdentifier {
+                if let name = aiApps[bundle] { dest = .aiChat(name) }
+                else if browsers.contains(bundle) { dest = .general(bundle) }
+            }
+        }
+        dockItemCache = (cg, dest, Date())
+        return dest
+    }
+
+    /// The Dock bar's frame in CG (top-left origin) coordinates.
+    private static func axDockFrame(pid: pid_t) -> CGRect? {
+        let app = AXUIElementCreateApplication(pid)
+        AXUIElementSetMessagingTimeout(app, 0.1)
+        var kids: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(app, kAXChildrenAttribute as CFString, &kids) == .success,
+              let list = (kids as? [AXUIElement])?.first else { return nil }
+        var posRef: CFTypeRef?, sizeRef: CFTypeRef?
+        var pos = CGPoint.zero, size = CGSize.zero
+        guard AXUIElementCopyAttributeValue(list, kAXPositionAttribute as CFString, &posRef) == .success, let posRef,
+              AXUIElementCopyAttributeValue(list, kAXSizeAttribute as CFString, &sizeRef) == .success, let sizeRef,
+              CFGetTypeID(posRef) == AXValueGetTypeID(), CFGetTypeID(sizeRef) == AXValueGetTypeID() else { return nil }
+        AXValueGetValue(posRef as! AXValue, .cgPoint, &pos)
+        AXValueGetValue(sizeRef as! AXValue, .cgSize, &size)
+        return size.width > 0 ? CGRect(origin: pos, size: size) : nil
     }
 
     private static func classify(bundle: String, pid: pid_t, window: Int, bounds: CGRect) -> Destination {
@@ -219,7 +282,8 @@ final class AutoFix {
     }
 
     private var session: Session?
-    private let pb = NSPasteboard(name: .drag)
+    /// The pasteboard of the drag in progress: the shared drag pasteboard, or the Dock's private one.
+    private var pb = NSPasteboard(name: .drag)
     var onOwnWrite: (() -> Void)?
 
     static var isEnabled: Bool { Settings.autoFix && PhotoLibrary.canRead }
@@ -228,6 +292,7 @@ final class AutoFix {
     func dragStarted(_ pasteboard: NSPasteboard) -> Bool {
         let types = pasteboard.types ?? []
         guard Settings.autoFix, !types.contains(.morphloMarker), !types.contains(.autoFixMarker) else { return false }
+        pb = pasteboard
         let ids = PhotoLibrary.localIdentifiers(in: pasteboard)
         if !ids.isEmpty {
             guard PhotoLibrary.canRead else {

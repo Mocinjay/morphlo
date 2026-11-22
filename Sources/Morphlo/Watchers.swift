@@ -1,4 +1,5 @@
 import AppKit
+import ApplicationServices
 
 /// Notices system-wide drags (without Accessibility permission) by watching the drag pasteboard
 /// while the mouse button is held down.
@@ -13,6 +14,10 @@ final class DragWatcher {
     var onHoldTick: ((NSPoint) -> Void)?
     var onHoldStart: (() -> Void)?
     var onHoldEnd: (() -> Void)?
+    /// Ticks while a press that started on the Dock is moving but no drag has shown up on the
+    /// shared drag pasteboard: the Dock uses a private one, which DragSniffer catches.
+    var onHiddenDragTick: ((NSPoint) -> Void)?
+    private var downInDock = false
     private var downAt: NSPoint = .zero
     private var moved = false
 
@@ -47,6 +52,7 @@ final class DragWatcher {
         guard timer == nil else { return }
         downAt = NSEvent.mouseLocation
         moved = false
+        downInDock = Self.dockWindow(at: downAt)
         onHoldStart?()
         timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated {
@@ -56,10 +62,11 @@ final class DragWatcher {
                 let p = NSEvent.mouseLocation
                 if !self.moved, hypot(p.x - self.downAt.x, p.y - self.downAt.y) > 12 {
                     self.moved = true
-                    Log.write("Hold: press-and-move started (frontmost: \(NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? "?"))")
+                    Log.write("Hold: press-and-move started (frontmost: \(NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? "?")\(self.downInDock ? ", from the Dock" : ""))")
                 }
                 if self.dragging { self.onDragTick?(p) }
                 if self.dragging || self.moved { self.onHoldTick?(p) }
+                if self.moved, !self.dragging, self.downInDock { self.onHiddenDragTick?(p) }
             }
         }
     }
@@ -72,6 +79,37 @@ final class DragWatcher {
         Log.write("Drag started (frontmost: \(NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? "?")): "
                   + (dragPasteboard.types ?? []).map(\.rawValue).joined(separator: ", "))
         onDragStart?(dragPasteboard)
+    }
+
+    /// DragSniffer found the private pasteboard of a drag that's already in flight.
+    func adopt(_ pasteboard: NSPasteboard) {
+        guard timer != nil, !dragging else { return }
+        dragging = true
+        Log.write("Drag started (from the Dock, private pasteboard): "
+                  + (pasteboard.types ?? []).map(\.rawValue).joined(separator: ", "))
+        onDragStart?(pasteboard)
+    }
+
+    /// Was this press (Cocoa coordinates) on the Dock or one of its stack pop-ups? The Dock draws
+    /// everything in one screen-sized window, so ask the Dock (and only the Dock) what's under the
+    /// point. Without Accessibility, or if the Dock doesn't answer, assume yes: the sniffer is
+    /// invisible and only reacts to real drags.
+    private static func dockWindow(at point: NSPoint) -> Bool {
+        guard let primary = NSScreen.screens.first,
+              let dock = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.dock").first
+        else { return false }
+        guard AXIsProcessTrusted() else { return true }
+        let app = AXUIElementCreateApplication(dock.processIdentifier)
+        AXUIElementSetMessagingTimeout(app, 0.05)
+        var element: AXUIElement?
+        let y = Float(primary.frame.height - point.y)
+        let err = AXUIElementCopyElementAtPosition(app, Float(point.x), y, &element)
+        if err == .noValue { return false }          // nothing of the Dock's at this point
+        guard err == .success, let element else { return true }
+        if CFEqual(element, app) { return false }
+        var role: CFTypeRef?
+        AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &role)
+        return (role as? String) != kAXApplicationRole as String
     }
 
     /// Morphlo itself rewrote the drag pasteboard; don't treat that as a new drag.
