@@ -28,6 +28,37 @@ final class DropDisc {
     }
 
     func close() { panel?.close() }
+
+    /// Opens the disc centered on a point (the cursor), e.g. from a shortcut or mid-drag.
+    func show(at point: NSPoint, duringDrag: Bool) {
+        if let p = panel, p.isVisible {
+            if duringDrag { return } // already up for this drag
+            p.close()
+            return
+        }
+        let p = DropDiscPanel()
+        p.openedDuringDrag = duringDrag
+        p.onClose = { [weak self] in self?.panel = nil }
+        p.disc.onPick = { [weak self, weak p] kind in
+            p?.close()
+            self?.onPickFiles?(kind)
+        }
+        p.disc.onFiles = { [weak p] urls, center in
+            p?.close()
+            FormatWheel.shared.present(for: urls, at: center)
+        }
+        panel = p
+        p.show(at: point)
+    }
+
+    /// A drag ended: a disc that popped up for it closes unless the file was dropped on it.
+    func dragEnded() {
+        guard let p = panel, p.openedDuringDrag else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak p] in
+            guard let p, p.isVisible, !p.disc.isBusy else { return }
+            p.close()
+        }
+    }
 }
 
 @MainActor
@@ -35,6 +66,7 @@ final class DropDiscPanel: NSPanel {
     static let size: CGFloat = 260
     let disc = DropDiscView(frame: NSRect(x: 0, y: 0, width: DropDiscPanel.size, height: DropDiscPanel.size))
     var onClose: (() -> Void)?
+    var openedDuringDrag = false
 
     init() {
         super.init(contentRect: NSRect(x: 0, y: 0, width: Self.size, height: Self.size),
@@ -54,6 +86,16 @@ final class DropDiscPanel: NSPanel {
 
     override var canBecomeKey: Bool { true }
 
+    /// Centered on the cursor, kept on screen.
+    func show(at point: NSPoint) {
+        var origin = NSPoint(x: point.x - Self.size / 2, y: point.y - Self.size / 2)
+        if let v = (NSScreen.screens.first { NSMouseInRect(point, $0.frame, false) } ?? NSScreen.main)?.visibleFrame {
+            origin.x = min(max(origin.x, v.minX + 4), v.maxX - Self.size - 4)
+            origin.y = min(max(origin.y, v.minY + 4), v.maxY - Self.size - 4)
+        }
+        present(origin: origin, anchorTop: false)
+    }
+
     func show(under button: NSStatusBarButton?) {
         // Centered under the menu-bar icon (or the top-right corner as a fallback), kept on screen.
         var anchor = NSPoint(x: (NSScreen.main?.visibleFrame.maxX ?? 800) - Self.size / 2 - 12,
@@ -66,12 +108,17 @@ final class DropDiscPanel: NSPanel {
         if let v = (NSScreen.screens.first { NSMouseInRect(anchor, $0.frame, false) } ?? NSScreen.main)?.visibleFrame {
             origin.x = min(max(origin.x, v.minX + 8), v.maxX - Self.size - 8)
         }
+        present(origin: origin, anchorTop: true)
+    }
+
+    private func present(origin: NSPoint, anchorTop: Bool) {
         setFrameOrigin(origin)
         alphaValue = 0
         makeKeyAndOrderFront(nil)
         if let layer = contentView?.layer {
-            layer.anchorPoint = CGPoint(x: 0.5, y: 1) // springs down from the menu bar
-            layer.position = CGPoint(x: Self.size / 2, y: Self.size)
+            // Springs down from the menu bar, or out from the cursor.
+            layer.anchorPoint = anchorTop ? CGPoint(x: 0.5, y: 1) : CGPoint(x: 0.5, y: 0.5)
+            layer.position = anchorTop ? CGPoint(x: Self.size / 2, y: Self.size) : CGPoint(x: Self.size / 2, y: Self.size / 2)
             let spring = CASpringAnimation(keyPath: "transform.scale")
             spring.fromValue = 0.6
             spring.toValue = 1
@@ -126,6 +173,7 @@ final class DropDiscView: NSView {
     private var hoverHub = false { didSet { if hoverHub != oldValue { needsDisplay = true } } }
     private var dragKind: MediaKind? { didSet { needsDisplay = true } }
     private var loading = false { didSet { needsDisplay = true } }
+    var isBusy: Bool { loading || isTargeted }
 
     // Same proportions and palette as the convert wheel / radial menu.
     private let outerR: CGFloat = 118, bandInnerR: CGFloat = 66, hubR: CGFloat = 58

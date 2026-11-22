@@ -13,6 +13,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     private let clipboard = ClipboardWatcher()
     private let autoFix = AutoFix()
     private var convertHotKey: HotKey?
+    private var discHotKey: HotKey?
+    private let dragTrigger = DragTriggerDetector()
     private let menu = NSMenu()
 
     static var version: String {
@@ -38,9 +40,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         menu.delegate = self
 
         autoFix.onOwnWrite = { [weak self] in self?.dragWatcher.acknowledgeOwnWrite() }
-        dragWatcher.onDragTick = { [weak self] point in self?.autoFix.dragMoved(to: point) }
+        dragWatcher.onDragTick = { [weak self] point in
+            guard let self else { return }
+            self.autoFix.dragMoved(to: point)
+            // Tap the trigger key (default ⇧) mid-drag: the drop disc pops up under the cursor.
+            if self.dragTrigger.tick() { DropDisc.shared.show(at: point, duringDrag: true) }
+        }
         dragWatcher.onDragStart = { [weak self] pb in
             guard let self else { return }
+            self.dragTrigger.reset()
             if self.autoFix.dragStarted(pb) { return } // zero-touch handles it; no shelf
             guard Settings.showShelfOnDrag else { return }
             let fromPhotos = NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.apple.Photos"
@@ -48,6 +56,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         }
         dragWatcher.onDragEnd = { [weak self] in
             self?.autoFix.dragEnded()
+            DropDisc.shared.dragEnded()
             self?.shelf.dragEnded()
         }
         if Settings.autoFix {
@@ -64,6 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         NSApp.servicesProvider = self
         NSUpdateDynamicServices()
         convertHotKey = HotKey(keyCode: kVK_ANSI_K, modifiers: cmdKey | optionKey) { [weak self] in self?.convertSelection() }
+        registerDiscHotKey()
         if convertHotKey == nil { Log.write("⌥⌘K couldn't be registered (another app owns it); use the menu or Finder's Quick Action") }
         Timer.scheduledTimer(withTimeInterval: 3600, repeats: true) { _ in
             DispatchQueue.global(qos: .utility).async { WorkDir.cleanOld() }
@@ -89,6 +99,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         add(menu, shelf.isVisible ? "Hide Shelf" : "Show Shelf", #selector(toggleShelf))
         let convertItem = add(menu, "Convert a File…", #selector(convertFilePicker), key: "k")
         convertItem.keyEquivalentModifierMask = [.command, .option]
+
+        let keys = NSMenu()
+        let h1 = keys.addItem(withTitle: "While dragging a file, tap…", action: nil, keyEquivalent: ""); h1.isEnabled = false
+        for t in DragTrigger.allCases {
+            let item = add(keys, t == .off ? "Off" : t.title + " — disc pops up under the cursor", #selector(setDragTrigger(_:)), on: Settings.dragTrigger == t)
+            item.representedObject = t.rawValue
+        }
+        keys.addItem(.separator())
+        let h2 = keys.addItem(withTitle: "Anytime", action: nil, keyEquivalent: ""); h2.isEnabled = false
+        let disc = Settings.openDiscShortcut?.display ?? "Off"
+        add(keys, "Open the drop disc: \(disc)  —  Change…", #selector(changeDiscShortcut))
+        let fin = keys.addItem(withTitle: "Convert Finder selection: ⌥⌘K", action: nil, keyEquivalent: ""); fin.isEnabled = false
+        let dragKey = Settings.dragTrigger == .off ? "" : " (\(Settings.dragTrigger.title.prefix(1)) while dragging)"
+        menu.addItem(withTitle: "Shortcuts\(dragKey)", action: nil, keyEquivalent: "").submenu = keys
         menu.addItem(.separator())
 
         add(menu, "Auto-fix drags (Photos & HEIC files) — no clicks", #selector(toggleAutoFix), on: Settings.autoFix)
@@ -217,6 +241,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     }
 
     @objc private func quit() { NSApp.terminate(nil) }
+
+    // MARK: Shortcuts
+
+    private func registerDiscHotKey() {
+        discHotKey = nil
+        guard let combo = Settings.openDiscShortcut else { return }
+        discHotKey = HotKey(keyCode: Int(combo.keyCode), modifiers: combo.carbonModifiers) {
+            DropDisc.shared.show(at: NSEvent.mouseLocation, duringDrag: false)
+        }
+        if discHotKey == nil { Log.write("Shortcut \(combo.display) is taken by another app; pick another in Shortcuts") }
+    }
+
+    @objc private func setDragTrigger(_ sender: NSMenuItem) {
+        if let raw = sender.representedObject as? String, let t = DragTrigger(rawValue: raw) { Settings.dragTrigger = t }
+    }
+
+    @objc private func changeDiscShortcut() {
+        ShortcutRecorder.shared.record(title: "Shortcut to open the drop disc") { [weak self] combo in
+            Settings.openDiscShortcut = combo
+            self?.registerDiscHotKey()
+        }
+    }
 
     // MARK: Convert wheel
 

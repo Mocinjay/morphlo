@@ -26,11 +26,12 @@ function download(url, dest, redirects = 0) {
       }
       if (res.statusCode !== 200) { res.resume(); return reject(new Error(`download failed (HTTP ${res.statusCode})`)); }
       const total = Number(res.headers["content-length"] || 0);
-      let got = 0;
+      let got = 0, shown = -1;
       const out = fs.createWriteStream(dest);
       res.on("data", (c) => {
         got += c.length;
-        if (total) process.stdout.write(`\r  Downloading… ${Math.round((got / total) * 100)}%`);
+        const pct = total ? Math.floor((got / total) * 100) : -1;
+        if (pct !== shown && pct % 5 === 0) { shown = pct; process.stdout.write(`\r  Downloading… ${pct}%`); }
       });
       res.pipe(out);
       out.on("finish", () => { process.stdout.write("\n"); out.close(resolve); });
@@ -40,6 +41,7 @@ function download(url, dest, redirects = 0) {
 }
 
 function targetDir() {
+  if (process.env.MORPHLO_INSTALL_DIR) { fs.mkdirSync(process.env.MORPHLO_INSTALL_DIR, { recursive: true }); return process.env.MORPHLO_INSTALL_DIR; } // testing
   try { fs.accessSync("/Applications", fs.constants.W_OK); return "/Applications"; }
   catch { const d = path.join(os.homedir(), "Applications"); fs.mkdirSync(d, { recursive: true }); return d; }
 }
@@ -63,12 +65,12 @@ async function install() {
 
   const dir = targetDir();
   const dest = path.join(dir, APP);
-  quitRunning();
+  if (!process.env.MORPHLO_INSTALL_DIR) quitRunning();
   if (fs.existsSync(dest)) execFileSync("/usr/bin/osascript", ["-e", `tell application "Finder" to delete (POSIX file "${dest}" as alias)`], { stdio: "ignore" });
   execFileSync("/usr/bin/ditto", [src, dest]);
   fs.rmSync(tmp, { recursive: true, force: true });
-  spawnSync("/usr/bin/open", [dest]);
-  console.log(`✔ Installed to ${dest} and opened it. Look for the butterfly in your menu bar.`);
+  if (!process.env.MORPHLO_INSTALL_DIR) spawnSync("/usr/bin/open", [dest]);
+  console.log(process.env.MORPHLO_INSTALL_DIR ? `✔ Installed to ${dest}` : `✔ Installed to ${dest} and opened it. Look for the butterfly in your menu bar.`);
 }
 
 function uninstall() {

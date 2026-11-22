@@ -11,7 +11,7 @@ Morphlo is a free menu-bar app for your Mac:
 ### Install
 Pick one:
 - **Download** `Morphlo.dmg` below → open it → drag Morphlo to Applications. It's signed and notarized by Apple, so it opens with no warnings.
-- **Homebrew:** `brew install --cask mocinjay/tap/morphlo`
+- **Homebrew:** `brew tap mocinjay/tap && brew trust mocinjay/tap && brew install --cask morphlo`
 - **npx:** `npx morphlo`
 
 On first launch, allow **Photos** access (Full Access). Morphlo needs it to grab your originals.

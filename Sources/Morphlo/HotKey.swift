@@ -2,25 +2,35 @@ import AppKit
 import Carbon
 
 /// A system-wide keyboard shortcut (Carbon hot key: no Accessibility permission needed).
+/// Each instance only reacts to its own key (several can be registered at once).
 final class HotKey {
+    private static var nextID: UInt32 = 1
     private var ref: EventHotKeyRef?
     private var handler: EventHandlerRef?
+    private let id: UInt32
     private let action: () -> Void
 
     /// `keyCode` is a virtual key code (e.g. kVK_ANSI_K), `modifiers` Carbon flags (cmdKey | optionKey).
     init?(keyCode: Int, modifiers: Int, action: @escaping () -> Void) {
         self.action = action
+        id = HotKey.nextID
+        HotKey.nextID += 1
         var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
         let me = Unmanaged.passUnretained(self).toOpaque()
-        let status = InstallEventHandler(GetApplicationEventTarget(), { _, _, userData in
-            guard let userData else { return noErr }
+        let status = InstallEventHandler(GetApplicationEventTarget(), { _, event, userData in
+            guard let userData, let event else { return OSStatus(eventNotHandledErr) }
+            var hkID = EventHotKeyID()
+            GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID),
+                              nil, MemoryLayout<EventHotKeyID>.size, nil, &hkID)
             let hk = Unmanaged<HotKey>.fromOpaque(userData).takeUnretainedValue()
+            guard hkID.id == hk.id else { return OSStatus(eventNotHandledErr) } // someone else's key
             DispatchQueue.main.async { hk.action() }
             return noErr
         }, 1, &spec, me, &handler)
         guard status == noErr else { return nil }
-        let id = EventHotKeyID(signature: OSType(0x4D52_504C), id: 1) // "MRPL"
-        guard RegisterEventHotKey(UInt32(keyCode), UInt32(modifiers), id, GetApplicationEventTarget(), 0, &ref) == noErr else {
+        let hotKeyID = EventHotKeyID(signature: OSType(0x4D52_504C), id: id) // "MRPL"
+        guard RegisterEventHotKey(UInt32(keyCode), UInt32(modifiers), hotKeyID, GetApplicationEventTarget(), 0, &ref) == noErr else {
+            if let handler { RemoveEventHandler(handler) }
             return nil
         }
     }

@@ -62,7 +62,7 @@ Pick one:
 - **Download:** [**Morphlo.dmg**](https://github.com/Mocinjay/morphlo/releases/latest/download/Morphlo.dmg). Open it and drag Morphlo to Applications.
 - **Homebrew:**
   ```bash
-  brew install --cask mocinjay/tap/morphlo
+  brew tap mocinjay/tap && brew trust mocinjay/tap && brew install --cask morphlo
   ```
 - **npx** (downloads the signed app from GitHub Releases and opens it):
   ```bash
