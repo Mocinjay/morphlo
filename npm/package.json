@@ -1,0 +1,13 @@
+{
+  "name": "morphlo",
+  "version": "0.1.0",
+  "description": "Never worry about converting again. Installs Morphlo — the free macOS menu-bar app that fixes Photos drags (HEIC, video stills) and converts any file with a wheel. 100% local.",
+  "bin": { "morphlo": "bin/morphlo.js" },
+  "os": ["darwin"],
+  "engines": { "node": ">=18" },
+  "files": ["bin/"],
+  "keywords": ["macos", "heic", "converter", "photos", "claude", "menu-bar", "file-converter"],
+  "homepage": "https://github.com/Mocinjay/morphlo",
+  "repository": { "type": "git", "url": "git+https://github.com/Mocinjay/morphlo.git" },
+  "license": "MIT"
+}

@@ -1,0 +1,13 @@
+.build/
+build/
+.swiftpm/
+*.xcodeproj
+.DS_Store
+dist/
+npm/*.tgz
+# Screen captures used during design (contain other on-screen content)
+design/menubar-live.png
+design/wheel.png
+design/wheel-hover.png
+design/wheel-v3.png
+design/wheel-v4.png

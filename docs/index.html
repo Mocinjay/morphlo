@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Morphlo — never worry about converting again</title>
+<meta name="description" content="Free macOS menu-bar app: fixes HEIC and video drags from Photos into Claude, ChatGPT and any site, and converts any file with a wheel. 100% local.">
+<link rel="icon" href="icon.png">
+<style>
+  :root {
+    --bg: #0a0a0a; --panel: #171717; --line: #262626; --line2: #404040;
+    --text: #fafafa; --muted: #a3a3a3; --dim: #737373; --accent: #8b6cf6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font: 16px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; -webkit-font-smoothing: antialiased; }
+  main { max-width: 980px; margin: 0 auto; padding: 0 20px; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: -.01em; }
+  .brand img { width: 30px; height: 30px; border-radius: 8px; }
+  header a { color: var(--muted); text-decoration: none; font-size: 14px; }
+  header a:hover { color: var(--text); }
+  .hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; padding: 56px 0 72px; }
+  h1 { font-size: clamp(36px, 6vw, 56px); line-height: 1.04; letter-spacing: -.035em; font-weight: 700; }
+  h1 span { color: var(--muted); }
+  .lead { color: var(--muted); font-size: 18px; margin: 18px 0 28px; max-width: 34ch; }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .btn { display: inline-flex; align-items: center; gap: 10px; background: var(--text); color: #0a0a0a; text-decoration: none;
+         font-weight: 600; padding: 13px 22px; border-radius: 12px; font-size: 16px; transition: transform .12s ease, opacity .12s; }
+  .btn:hover { transform: translateY(-1px); opacity: .92; }
+  .btn svg { width: 18px; height: 18px; }
+  .ghost { color: var(--muted); text-decoration: none; font-size: 14px; padding: 13px 6px; }
+  .ghost:hover { color: var(--text); }
+  .small { color: var(--dim); font-size: 13px; margin-top: 14px; }
+  .shot { display: flex; justify-content: center; }
+  .shot img { width: min(100%, 380px); border-radius: 50%; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+  h2 { font-size: 26px; letter-spacing: -.02em; margin-bottom: 18px; }
+  section { padding: 48px 0; border-top: 1px solid var(--line); }
+  .install { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+  .card h3 { font-size: 14px; color: var(--muted); font-weight: 500; margin-bottom: 10px; }
+  .cmd { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--bg); border: 1px solid var(--line);
+         border-radius: 10px; padding: 10px 12px; font: 13px/1.4 ui-monospace, "SF Mono", Menlo, monospace; color: var(--text); overflow-x: auto; }
+  .cmd button { flex: none; background: none; border: 1px solid var(--line2); color: var(--muted); border-radius: 7px; padding: 4px 8px; font-size: 12px; cursor: pointer; }
+  .cmd button:hover { color: var(--text); border-color: var(--muted); }
+  .cmd a { color: var(--text); }
+  .features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .feature h3 { font-size: 17px; margin-bottom: 6px; letter-spacing: -.01em; }
+  .feature p { color: var(--muted); font-size: 15px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  td, th { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 500; }
+  td:first-child { color: var(--muted); white-space: nowrap; }
+  footer { color: var(--dim); font-size: 13px; padding: 40px 0 60px; border-top: 1px solid var(--line); }
+  footer a { color: var(--muted); }
+  @media (max-width: 760px) {
+    .hero { grid-template-columns: 1fr; padding-top: 24px; }
+    .shot { order: -1; }
+    .install, .features { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="brand"><img src="icon.png" alt="">Morphlo</div>
+    <a href="https://github.com/Mocinjay/morphlo">GitHub</a>
+  </header>
+
+  <div class="hero">
+    <div>
+      <h1>Never worry about<br><span>converting again.</span></h1>
+      <p class="lead">A free menu-bar app for your Mac. Drag photos and videos straight from Photos into Claude, ChatGPT or any website and they just work — and any file turns into any format with one click.</p>
+      <div class="cta">
+        <a class="btn" href="https://github.com/Mocinjay/morphlo/releases/latest/download/Morphlo.dmg">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-5-5m5 5 5-5M5 21h14"/></svg>
+          Download for Mac
+        </a>
+        <a class="ghost" href="#install">or install with Homebrew / npx →</a>
+      </div>
+      <p class="small">Free & open source · macOS 14+ · Apple Silicon & Intel · 100% on-device</p>
+    </div>
+    <div class="shot"><img src="wheel.png" alt="Morphlo's convert wheel showing image formats around a file"></div>
+  </div>
+
+  <section id="install">
+    <h2>Install</h2>
+    <div class="install">
+      <div class="card">
+        <h3>Download</h3>
+        <div class="cmd"><a href="https://github.com/Mocinjay/morphlo/releases/latest/download/Morphlo.dmg">Morphlo.dmg</a></div>
+        <p class="small">Open it, drag Morphlo to Applications.</p>
+      </div>
+      <div class="card">
+        <h3>Homebrew</h3>
+        <div class="cmd"><code>brew install --cask mocinjay/tap/morphlo</code><button data-copy="brew install --cask mocinjay/tap/morphlo">Copy</button></div>
+        <p class="small">Updates with <code>brew upgrade</code>.</p>
+      </div>
+      <div class="card">
+        <h3>npx</h3>
+        <div class="cmd"><code>npx morphlo</code><button data-copy="npx morphlo">Copy</button></div>
+        <p class="small">Downloads the signed app and opens it.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What it does</h2>
+    <div class="features">
+      <div class="feature"><h3>Fixes drags out of Photos</h3><p>Chrome, Electron apps and web uploads get a low-res preview or a HEIC from Photos, and videos turn into a still frame. Morphlo fetches the real original the moment you start dragging and swaps it in — nothing to click.</p></div>
+      <div class="feature"><h3>Convert wheel</h3><p>Right-click any file → Convert with Morphlo, or press ⌥⌘K. Pick a format from the wheel. Keep the original or replace it — your choice in settings (hold ⌥ to flip it once).</p></div>
+      <div class="feature"><h3>Made for AI chats</h3><p>Claude and ChatGPT can't watch video. Dropped into an AI chat, a video becomes a contact sheet and frames, with an optional on-device transcript.</p></div>
+      <div class="feature"><h3>Completely local</h3><p>Every conversion uses frameworks built into macOS. No uploads, no accounts, no analytics, nothing else to install.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Formats</h2>
+    <table>
+      <tr><td>Images</td><td>JPEG, PNG, HEIC, AVIF, TIFF, GIF, BMP, PDF</td></tr>
+      <tr><td>Video</td><td>MP4 (H.264), MP4 (HEVC), MOV (ProRes), animated GIF, audio only</td></tr>
+      <tr><td>Audio</td><td>M4A (AAC, HE-AAC), WAV, AIFF, FLAC, Apple Lossless</td></tr>
+      <tr><td>Documents</td><td>PDF, DOCX, DOC, ODT, RTF, TXT, HTML — from Markdown, Word, ODT, RTF, HTML, TXT</td></tr>
+      <tr><td>PDF</td><td>PNG / JPEG per page, DOCX, ODT, RTF, TXT</td></tr>
+      <tr><td>Fonts</td><td>WOFF2, WOFF, TTF / OTF</td></tr>
+    </table>
+  </section>
+
+  <footer>
+    MIT licensed · <a href="https://github.com/Mocinjay/morphlo">Source on GitHub</a> · Convert engine adapted from <a href="https://github.com/newtonstudios/convert">Convert</a> (MIT)
+  </footer>
+</main>
+<script>
+  document.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = "Copied"; setTimeout(() => (b.textContent = "Copy"), 1400); } catch {}
+  }));
+</script>
+</body>
+</html>

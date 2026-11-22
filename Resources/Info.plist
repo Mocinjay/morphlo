@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleExecutable</key>
+    <string>Morphlo</string>
+    <key>CFBundleIdentifier</key>
+    <string>io.github.mocinjay.morphlo</string>
+    <key>CFBundleName</key>
+    <string>Morphlo</string>
+    <key>CFBundleDisplayName</key>
+    <string>Morphlo</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>__VERSION__</string>
+    <key>CFBundleVersion</key>
+    <string>__BUILD__</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.utilities</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Morphlo transcribes the audio of videos you drop on it, on your Mac, so AI chats can read what was said.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Morphlo fetches the full-quality original of photos and videos you drag out of Photos, so the app or website you drop them on gets a file it can read.</string>
+    <key>NSAccessibilityUsageDescription</key>
+    <string>Optional: lets Morphlo read browser window titles to tell when you're dropping into an AI chat like Claude or ChatGPT.</string>
+    <key>NSServices</key>
+    <array>
+        <dict>
+            <key>NSMenuItem</key>
+            <dict><key>default</key><string>Convert with Morphlo</string></dict>
+            <key>NSMessage</key>
+            <string>convertFiles</string>
+            <key>NSPortName</key>
+            <string>Morphlo</string>
+            <key>NSRequiredContext</key>
+            <dict/>
+            <key>NSSendFileTypes</key>
+            <array>
+                <string>com.adobe.pdf</string>
+                <string>public.image</string>
+                <string>public.audio</string>
+                <string>public.movie</string>
+                <string>public.audiovisual-content</string>
+                <string>public.truetype-ttf-font</string>
+                <string>public.opentype-font</string>
+                <string>public.truetype-collection-font</string>
+                <string>public.opentype-collection-font</string>
+                <string>org.w3c.woff</string>
+                <string>org.w3c.woff2</string>
+                <string>public.plain-text</string>
+                <string>public.rtf</string>
+                <string>com.apple.rtfd</string>
+                <string>public.html</string>
+                <string>com.apple.webarchive</string>
+                <string>org.openxmlformats.wordprocessingml.document</string>
+                <string>com.microsoft.word.doc</string>
+                <string>org.oasis-open.opendocument.text</string>
+                <string>net.daringfireball.markdown</string>
+            </array>
+        </dict>
+    </array>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>Morphlo reads your Finder selection when you press ⌥⌘K, so it can convert the files you picked.</string>
+    <key>UTImportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key><string>org.w3c.woff</string>
+            <key>UTTypeDescription</key><string>Web Open Font Format</string>
+            <key>UTTypeConformsTo</key><array><string>public.font</string><string>public.data</string></array>
+            <key>UTTypeTagSpecification</key><dict><key>public.filename-extension</key><array><string>woff</string></array></dict>
+        </dict>
+        <dict>
+            <key>UTTypeIdentifier</key><string>org.w3c.woff2</string>
+            <key>UTTypeDescription</key><string>Web Open Font Format 2</string>
+            <key>UTTypeConformsTo</key><array><string>public.font</string><string>public.data</string></array>
+            <key>UTTypeTagSpecification</key><dict><key>public.filename-extension</key><array><string>woff2</string></array></dict>
+        </dict>
+    </array>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key><string>Convertible file</string>
+            <key>CFBundleTypeRole</key><string>Viewer</string>
+            <key>LSHandlerRank</key><string>None</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>public.image</string><string>public.movie</string><string>public.audio</string>
+                <string>public.audiovisual-content</string><string>com.adobe.pdf</string><string>public.font</string>
+                <string>public.plain-text</string><string>public.rtf</string><string>public.html</string>
+                <string>org.openxmlformats.wordprocessingml.document</string><string>com.microsoft.word.doc</string>
+                <string>org.oasis-open.opendocument.text</string><string>net.daringfireball.markdown</string>
+                <string>org.w3c.woff</string><string>org.w3c.woff2</string>
+            </array>
+        </dict>
+    </array>
+    <key>NSHumanReadableCopyright</key>
+    <string>Free and open source. MIT License.</string>
+</dict>
+</plist>
