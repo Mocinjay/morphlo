@@ -5,6 +5,7 @@
 ### Every drag just works. Any file, any format. 100% on your Mac.
 
 [![Release](https://img.shields.io/github/v/release/Mocinjay/morphlo?style=flat-square&color=8b6cf6&label=release)](https://github.com/Mocinjay/morphlo/releases/latest)
+[![CI](https://img.shields.io/github/actions/workflow/status/Mocinjay/morphlo/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/Mocinjay/morphlo/actions/workflows/ci.yml)
 [![Downloads](https://img.shields.io/github/downloads/Mocinjay/morphlo/total?style=flat-square&color=404040)](https://github.com/Mocinjay/morphlo/releases)
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-111111?style=flat-square&logo=apple&logoColor=white)](#install)
 [![Swift 6 toolchain](https://img.shields.io/badge/Swift-6%20toolchain-F05138?style=flat-square&logo=swift&logoColor=white)](#build-from-source)
