@@ -509,4 +509,33 @@
       new IntersectionObserver((es) => es.forEach((e) => (e.isIntersecting ? start() : stop()))).observe(log);
     } else start();
   }
+
+  /* ---------- demo video: custom play button, native controls once playing ---------- */
+  {
+    const film = document.getElementById('film');
+    const play = document.getElementById('film-play');
+    if (film && play) {
+      film.controls = false;
+      play.hidden = false;
+      const show = (on) => { play.hidden = !on; film.controls = !on; };
+      play.addEventListener('click', () => {
+        show(false);
+        const p = film.play();
+        if (p && p.catch) p.catch((e) => { if (e && e.name === 'NotSupportedError') fail(); else show(true); });
+        film.focus({ preventScroll: true });
+      });
+      const err = document.getElementById('film-err');
+      function fail() { play.hidden = true; film.controls = true; if (err) err.hidden = false; }
+      film.addEventListener('error', fail);
+      film.addEventListener('play', () => show(false));
+      film.addEventListener('ended', () => { film.load(); show(true); }); // load() brings the poster back
+      // Pause when scrolled away so it never plays offscreen.
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting || film.paused) return;
+          // Leave Picture-in-Picture running: that's the point of it.
+          if (document.pictureInPictureElement === film || (film.webkitPresentationMode || 'inline') !== 'inline') return;
+          film.pause(); }), { threshold: 0.15 }).observe(film);
+      }
+    }
+  }
 })();

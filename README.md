@@ -13,7 +13,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-525252?style=flat-square)](./LICENSE)
 [![100% local](https://img.shields.io/badge/100%25-local-3fdd86?style=flat-square)](#100-local)
 
-[Install](#install) · [Just drag](#just-drag) · [The convert wheel](#the-convert-wheel) · [100% local](#100-local) · [How it works](#how-it-works) · [Website](https://mocinjay.github.io/morphlo) · [Changelog](./CHANGELOG.md)
+[Watch](#see-it-in-42-seconds) · [Install](#install) · [Just drag](#just-drag) · [The convert wheel](#the-convert-wheel) · [100% local](#100-local) · [How it works](#how-it-works) · [Website](https://mocinjay.github.io/morphlo) · [Changelog](./CHANGELOG.md)
 
 <br />
 
@@ -30,6 +30,12 @@
 - **100% local.** Only what ships with macOS: built-in frameworks plus macOS's own command-line tools. Morphlo never connects to the internet: no accounts, no analytics, no telemetry, no auto-updater.
 - **Free & open source.** MIT licensed. Signed and notarized by Apple, so Gatekeeper opens it without security warnings.
 - **Native & tiny.** A ~2.5 MB Swift menu-bar app, universal for Apple Silicon and Intel. No ffmpeg, no Homebrew tools, nothing else to install.
+
+## See it in 42 seconds
+
+<a href="https://mocinjay.github.io/morphlo/#video"><img src="https://raw.githubusercontent.com/Mocinjay/morphlo/main/assets/video.svg" alt="Play the 42-second Morphlo demo: a HEIC photo is rejected by an AI chat, then the same drag with Morphlo on arrives as a JPEG, followed by the convert wheel and the 100% local promise." width="100%" /></a>
+
+<sub>The HEIC that won't upload, the same drag with Morphlo on, the convert wheel, and why nothing leaves your Mac. [Watch on the website](https://mocinjay.github.io/morphlo/#video) or [download the MP4](https://mocinjay.github.io/morphlo/media/morphlo-demo.mp4) (3.6 MB).</sub>
 
 ## Install
 

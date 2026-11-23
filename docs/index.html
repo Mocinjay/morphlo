@@ -13,8 +13,16 @@
 <meta property="og:title" content="Morphlo — never worry about converting again">
 <meta property="og:description" content="Free Mac menu-bar app that makes every drag just work and turns any file into any format, 100% on your Mac.">
 <meta property="og:url" content="https://mocinjay.github.io/morphlo/">
-<meta property="og:image" content="https://mocinjay.github.io/morphlo/icon.png">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://mocinjay.github.io/morphlo/media/morphlo-demo-poster.jpg">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="720">
+<meta property="og:image:alt" content="A photo named IMG_0464 being dragged into an AI chat; mid-drag its label changes from .HEIC to .jpg.">
+<meta property="og:video" content="https://mocinjay.github.io/morphlo/media/morphlo-demo.mp4">
+<meta property="og:video:type" content="video/mp4">
+<meta property="og:video:width" content="1920">
+<meta property="og:video:height" content="1080">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://mocinjay.github.io/morphlo/media/morphlo-demo-poster.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -40,6 +48,7 @@
       <span class="pill mono">v0.1.3</span>
     </a>
     <nav aria-label="Primary">
+      <a class="hide-sm" href="#video">Demo</a>
       <a class="hide-sm" href="#features">Features</a>
       <a class="hide-sm" href="#convert">Convert</a>
       <a class="hide-sm" href="#privacy">Privacy</a>
@@ -127,6 +136,33 @@
       <p class="demo-hint mono">Drag a tile into the chat, then flip Morphlo on and try again.</p>
       <p class="sr-only" aria-live="polite" id="demo-live"></p>
     </div>
+  </div>
+</section>
+
+<!-- ============ WATCH ============ -->
+<section class="sec sec-watch" id="video" aria-labelledby="video-h">
+  <div class="wrap">
+    <header class="sec-head reveal">
+      <p class="eyebrow mono">watch / 0:42</p>
+      <h2 id="video-h">See it in 42 seconds.</h2>
+      <p class="sub">The HEIC that won't upload, the same drag with Morphlo on, the convert wheel, and why nothing ever leaves your Mac.</p>
+    </header>
+    <figure class="film reveal">
+      <div class="film-frame">
+        <video id="film" src="media/morphlo-demo.mp4" poster="media/morphlo-demo-poster.jpg" width="1920" height="1080" preload="none" playsinline controls aria-describedby="film-cap">
+          <a href="media/morphlo-demo.mp4">Download the Morphlo demo video (MP4, 3.6 MB)</a>
+        </video>
+        <button class="film-play" type="button" id="film-play" aria-label="Watch the demo, 0:42" hidden>
+          <span class="film-pill" aria-hidden="true">
+            <span class="film-btn"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></span>
+            <span class="film-txt">Watch the demo</span>
+            <span class="film-len mono">0:42</span>
+          </span>
+        </button>
+      </div>
+      <p class="film-err" id="film-err" hidden>The video couldn't load. <a href="media/morphlo-demo.mp4">Download the MP4 (3.6&nbsp;MB)</a>.</p>
+      <figcaption class="film-cap mono" id="film-cap">An animated walkthrough of how Morphlo works. The only sound is quiet clicks, so it works muted.</figcaption>
+    </figure>
   </div>
 </section>
 
