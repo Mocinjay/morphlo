@@ -39,5 +39,7 @@ jobs:
           if [ $rc -ne 1 ]; then echo "::error::grep failed (rc=$rc)"; exit 1; fi
           echo 'No networking APIs found.'
 
-      - name: Build (release, universal)
-        run: swift build -c release --arch arm64 --arch x86_64
+      - name: Build (release)
+        # Universal (--arch arm64 --arch x86_64) builds hit a "duplicate output file" bug in
+        # Xcode 16.4's build system; release builds use scripts/build-app.sh on a newer Xcode.
+        run: swift build -c release
