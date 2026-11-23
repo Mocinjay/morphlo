@@ -4,135 +4,366 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Morphlo — never worry about converting again</title>
-<meta name="description" content="Free macOS menu-bar app: fixes HEIC and video drags from Photos into Claude, ChatGPT and any site, and converts any file with a wheel. 100% local.">
+<meta name="description" content="Morphlo is a free, open-source Mac menu-bar app. Drag photos and videos out of Apple Photos into Claude, ChatGPT or any upload box and they just work, and convert any file to any format with a radial wheel. 100% on your Mac.">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="color-scheme" content="dark">
 <link rel="icon" href="icon.png">
-<style>
-  :root {
-    --bg: #0a0a0a; --panel: #171717; --line: #262626; --line2: #404040;
-    --text: #fafafa; --muted: #a3a3a3; --dim: #737373; --accent: #8b6cf6;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font: 16px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; -webkit-font-smoothing: antialiased; }
-  main { max-width: 980px; margin: 0 auto; padding: 0 20px; }
-  header { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: -.01em; }
-  .brand img { width: 30px; height: 30px; border-radius: 8px; }
-  header a { color: var(--muted); text-decoration: none; font-size: 14px; }
-  header a:hover { color: var(--text); }
-  .hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; padding: 56px 0 72px; }
-  h1 { font-size: clamp(36px, 6vw, 56px); line-height: 1.04; letter-spacing: -.035em; font-weight: 700; }
-  h1 span { color: var(--muted); }
-  .lead { color: var(--muted); font-size: 18px; margin: 18px 0 28px; max-width: 34ch; }
-  .cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-  .btn { display: inline-flex; align-items: center; gap: 10px; background: var(--text); color: #0a0a0a; text-decoration: none;
-         font-weight: 600; padding: 13px 22px; border-radius: 12px; font-size: 16px; transition: transform .12s ease, opacity .12s; }
-  .btn:hover { transform: translateY(-1px); opacity: .92; }
-  .btn svg { width: 18px; height: 18px; }
-  .ghost { color: var(--muted); text-decoration: none; font-size: 14px; padding: 13px 6px; }
-  .ghost:hover { color: var(--text); }
-  .small { color: var(--dim); font-size: 13px; margin-top: 14px; }
-  .shot { display: flex; justify-content: center; }
-  .shot img { width: min(100%, 380px); border-radius: 50%; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
-  h2 { font-size: 26px; letter-spacing: -.02em; margin-bottom: 18px; }
-  section { padding: 48px 0; border-top: 1px solid var(--line); }
-  .install { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
-  .card h3 { font-size: 14px; color: var(--muted); font-weight: 500; margin-bottom: 10px; }
-  .cmd { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--bg); border: 1px solid var(--line);
-         border-radius: 10px; padding: 10px 12px; font: 13px/1.4 ui-monospace, "SF Mono", Menlo, monospace; color: var(--text); overflow-x: auto; }
-  .cmd button { flex: none; background: none; border: 1px solid var(--line2); color: var(--muted); border-radius: 7px; padding: 4px 8px; font-size: 12px; cursor: pointer; }
-  .cmd button:hover { color: var(--text); border-color: var(--muted); }
-  .cmd a { color: var(--text); }
-  .features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-  .feature h3 { font-size: 17px; margin-bottom: 6px; letter-spacing: -.01em; }
-  .feature p { color: var(--muted); font-size: 15px; }
-  table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  td, th { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
-  th { color: var(--muted); font-weight: 500; }
-  td:first-child { color: var(--muted); white-space: nowrap; }
-  footer { color: var(--dim); font-size: 13px; padding: 40px 0 60px; border-top: 1px solid var(--line); }
-  footer a { color: var(--muted); }
-  @media (max-width: 760px) {
-    .hero { grid-template-columns: 1fr; padding-top: 24px; }
-    .shot { order: -1; }
-    .install, .features { grid-template-columns: 1fr; }
-  }
-</style>
+<link rel="apple-touch-icon" href="icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Morphlo — never worry about converting again">
+<meta property="og:description" content="Free Mac menu-bar app that makes every drag just work and turns any file into any format, 100% on your Mac.">
+<meta property="og:url" content="https://mocinjay.github.io/morphlo/">
+<meta property="og:image" content="https://mocinjay.github.io/morphlo/icon.png">
+<meta name="twitter:card" content="summary">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+<script>document.documentElement.classList.add('js')</script>
 </head>
 <body>
-<main>
-  <header>
-    <div class="brand"><img src="icon.png" alt="">Morphlo</div>
-    <a href="https://github.com/Mocinjay/morphlo">GitHub</a>
-  </header>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="bfly" viewBox="0 0 18 18"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path stroke-width="1.6" d="M9 9C7 5 3 1.5 2 3C.5 6 5 8.5 9 9M9 9C6 10.5 2 13 3.5 15C5.5 16.5 8.5 13 9 9M9 9C11 5 15 1.5 16 3C17.5 6 13 8.5 9 9M9 9C12 10.5 16 13 14.5 15C12.5 16.5 9.5 13 9 9"/><path stroke-width="1.4" d="M9 5V14"/></g></symbol>
+  <symbol id="i-star" viewBox="0 0 16 16"><path fill="currentColor" d="M8 .8l2.2 4.6 5 .7-3.6 3.5.9 5L8 12.2 3.5 14.6l.9-5L.8 6.1l5-.7z"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.4"><rect x="5.5" y="5.5" width="8" height="8" rx="1.8"/><path d="M10.5 3.2V3A1.5 1.5 0 0 0 9 1.5H3A1.5 1.5 0 0 0 1.5 3v6A1.5 1.5 0 0 0 3 10.5h.2"/></g></symbol>
+  <symbol id="i-down" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M8 2v9m-4-4 4 4 4-4M2.5 14h11"/></symbol>
+  <symbol id="i-check" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3.5 8.5l3 3 6-7"/></symbol>
+</svg>
 
-  <div class="hero">
-    <div>
-      <h1>Never worry about<br><span>converting again.</span></h1>
-      <p class="lead">A free menu-bar app for your Mac. Drag photos and videos straight from Photos into Claude, ChatGPT or any website and they just work — and any file turns into any format with one click.</p>
-      <div class="cta">
-        <a class="btn" href="https://github.com/Mocinjay/morphlo/releases/latest/download/Morphlo.dmg">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-5-5m5 5 5-5M5 21h14"/></svg>
-          Download for Mac
-        </a>
-        <a class="ghost" href="#install">or install with Homebrew / npx →</a>
-      </div>
-      <p class="small">Free & open source · macOS 14+ · Apple Silicon & Intel · 100% on-device</p>
-    </div>
-    <div class="shot"><img src="wheel.png" alt="Morphlo's convert wheel showing image formats around a file"></div>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="#top" aria-label="Morphlo home">
+      <svg class="bf" aria-hidden="true"><use href="#bfly"/></svg>
+      <span>Morphlo</span>
+      <span class="pill mono">v0.1.3</span>
+    </a>
+    <nav aria-label="Primary">
+      <a class="hide-sm" href="#features">Features</a>
+      <a class="hide-sm" href="#convert">Convert</a>
+      <a class="hide-sm" href="#privacy">Privacy</a>
+      <a href="#install">Install</a>
+      <a class="gh" href="https://github.com/Mocinjay/morphlo"><svg aria-hidden="true"><use href="#i-star"/></svg>GitHub</a>
+    </nav>
   </div>
+</header>
 
-  <section id="install">
-    <h2>Install</h2>
-    <div class="install">
-      <div class="card">
-        <h3>Download</h3>
-        <div class="cmd"><a href="https://github.com/Mocinjay/morphlo/releases/latest/download/Morphlo.dmg">Morphlo.dmg</a></div>
-        <p class="small">Open it, drag Morphlo to Applications.</p>
+<main id="main">
+<!-- ============ HERO ============ -->
+<section class="hero" id="top">
+  <div class="grid-bg" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="hero-copy">
+      <img class="hero-icon" src="icon.png" width="72" height="72" alt="Morphlo app icon: a white butterfly on a violet squircle">
+      <h1>Never worry about converting again.</h1>
+      <p class="lead">A free menu-bar app that makes every drag just work and turns any file into any format, 100% on your Mac.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="https://github.com/Mocinjay/morphlo/releases/latest/download/Morphlo.dmg">
+          <svg aria-hidden="true"><use href="#i-down"/></svg>Download for Mac
+        </a>
+        <button class="btn btn-cmd mono" type="button" data-copy="npx morphlo" aria-label="Copy command: npx morphlo">
+          <span class="dim">$</span> npx morphlo
+          <span class="copy-ico"><svg aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-lbl">Copy</span></span>
+        </button>
       </div>
-      <div class="card">
-        <h3>Homebrew</h3>
-        <div class="cmd"><code>brew tap mocinjay/tap && brew trust mocinjay/tap && brew install --cask morphlo</code><button data-copy="brew tap mocinjay/tap && brew trust mocinjay/tap && brew install --cask morphlo">Copy</button></div>
-        <p class="small">Updates with <code>brew upgrade</code>.</p>
+      <p class="meta mono"><span>Free &amp; open source</span> <i>·</i> <span>macOS 14+</span> <i>·</i> <span>Apple Silicon &amp; Intel</span> <i>·</i> <span>Notarized by Apple</span></p>
+    </div>
+
+    <!-- Interactive drag demo -->
+    <div class="demo" id="demo">
+      <div class="demo-bar">
+        <button class="switch" type="button" role="switch" aria-checked="false" id="demo-switch">
+          <span class="track"><span class="knob"></span></span>
+          <span class="mono">Morphlo: <b id="demo-state">Off</b></span>
+        </button>
+        <div class="demo-keys">
+          <button class="kbtn mono" type="button" data-send="heic">Send photo</button>
+          <button class="kbtn mono" type="button" data-send="mov">Send video</button>
+        </div>
       </div>
-      <div class="card">
-        <h3>npx</h3>
-        <div class="cmd"><code>npx morphlo</code><button data-copy="npx morphlo">Copy</button></div>
-        <p class="small">Downloads the signed app and opens it.</p>
+      <div class="scene" id="scene">
+        <div class="menubar mono" aria-hidden="true">
+          <span><b>Photos</b><span class="hide-sm">&nbsp;&nbsp;File&nbsp;&nbsp;Edit&nbsp;&nbsp;Image&nbsp;&nbsp;View</span></span>
+          <span class="mb-right"><svg class="mb-bf"><use href="#bfly"/></svg><span>9:41</span></span>
+        </div>
+        <div class="win photos">
+          <div class="win-top"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="mono">Library</span></div>
+          <div class="pgrid">
+            <div class="tile g1" aria-hidden="true"></div>
+            <div class="tile g2 drag" data-kind="heic" role="img" aria-label="Photo IMG_0464.HEIC, draggable">
+              <span class="tcap mono">IMG_0464.HEIC</span><span class="tbadge mono" aria-hidden="true">HEIC</span><span class="hint" aria-hidden="true"></span>
+            </div>
+            <div class="tile g3" aria-hidden="true"></div>
+            <div class="tile g4 drag" data-kind="mov" role="img" aria-label="Video IMG_0465.MOV, 18 seconds, draggable">
+              <span class="tcap mono">IMG_0465.MOV</span><span class="tbadge mono" aria-hidden="true">MOV</span><span class="tdur mono">0:18</span><span class="hint" aria-hidden="true"></span>
+            </div>
+            <div class="tile g5" aria-hidden="true"></div>
+            <div class="tile g6" aria-hidden="true"></div>
+            <div class="tile g7 hide-sm" aria-hidden="true"></div>
+            <div class="tile g8 hide-sm" aria-hidden="true"></div>
+            <div class="tile g9 hide-sm" aria-hidden="true"></div>
+          </div>
+        </div>
+        <div class="win chat" id="chat">
+          <div class="win-top"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="mono">AI chat</span></div>
+          <div class="toast mono" id="toast" role="status"></div>
+          <div class="thread" id="thread">
+            <p class="empty mono">Drop a photo or video here</p>
+          </div>
+          <div class="composer">
+            <span class="plus" aria-hidden="true">+</span>
+            <span class="ph">Ask anything…</span>
+            <span class="send" aria-hidden="true">↑</span>
+          </div>
+        </div>
+        <div class="ghost" id="ghost" aria-hidden="true">
+          <span class="g-thumb"></span>
+          <span class="g-label mono"><span class="g-base">IMG_0464</span><span class="g-ext">.HEIC</span></span>
+          <span class="g-badge mono">full video</span>
+        </div>
+        <svg class="cursor" id="cursor" viewBox="0 0 20 24" aria-hidden="true"><path d="M2 1.5v18.2l4.6-4.4 3 6.9 3.2-1.4-3-6.8h6.4z" fill="#fafafa" stroke="#0a0a0a" stroke-width="1.3" stroke-linejoin="round"/></svg>
+      </div>
+      <p class="demo-hint mono">Drag a tile into the chat, then flip Morphlo on and try again.</p>
+      <p class="sr-only" aria-live="polite" id="demo-live"></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ JUST DRAG ============ -->
+<section class="sec" id="features">
+  <div class="wrap">
+    <header class="sec-head reveal">
+      <p class="eyebrow mono">01 / just drag</p>
+      <h2>Zero-touch. No clicks, no pop-ups.</h2>
+      <p class="sub">Morphlo swaps the file mid-drag, before the destination reads it. iPhone HEIC photos arrive as full-quality JPEG. Videos arrive as the real video, every frame plus audio, instead of a single still.</p>
+    </header>
+    <div class="flow reveal">
+      <div class="flow-col">
+        <p class="flow-k mono">from</p>
+        <ul class="chips">
+          <li class="chip mono">Photos</li><li class="chip mono">Finder</li><li class="chip mono">Desktop</li><li class="chip mono">Dock stack</li>
+        </ul>
+      </div>
+      <div class="flow-mid" aria-hidden="true">
+        <span class="flow-line"></span>
+        <span class="flow-node"><svg><use href="#bfly"/></svg></span>
+        <span class="flow-line"></span>
+      </div>
+      <div class="flow-col">
+        <p class="flow-k mono">to</p>
+        <ul class="chips">
+          <li class="chip mono">Claude</li><li class="chip mono">ChatGPT</li><li class="chip mono">Gmail</li><li class="chip mono">Dropbox</li><li class="chip mono">Slack</li><li class="chip mono chip-a">any upload box</li>
+        </ul>
       </div>
     </div>
-  </section>
-
-  <section>
-    <h2>What it does</h2>
-    <div class="features">
-      <div class="feature"><h3>Fixes drags out of Photos</h3><p>Chrome, Electron apps and web uploads get a low-res preview or a HEIC from Photos, and videos turn into a still frame. Morphlo fetches the real original the moment you start dragging and swaps it in — nothing to click.</p></div>
-      <div class="feature"><h3>Convert wheel</h3><p>Right-click any file → Convert with Morphlo, or press ⌥⌘K. Pick a format from the wheel. Keep the original or replace it — your choice in settings (hold ⌥ to flip it once).</p></div>
-      <div class="feature"><h3>Made for AI chats</h3><p>Claude and ChatGPT can't watch video. Dropped into an AI chat, a video becomes a contact sheet and frames, with an optional on-device transcript.</p></div>
-      <div class="feature"><h3>Completely local</h3><p>Every conversion uses frameworks built into macOS. No uploads, no accounts, no analytics, nothing else to install.</p></div>
+    <div class="rules reveal">
+      <div class="rule">
+        <p class="rule-k mono">smart routing</p>
+        <p>Finder, Mail, Messages, Notes, the Desktop and the Trash get the <b>untouched original</b>. Inside Photos, nothing is touched.</p>
+      </div>
+      <div class="rule">
+        <p class="rule-k mono">videos for AI</p>
+        <p>Prefer pictures? Switch AI chats to receive <b>still frames plus a contact sheet</b> instead of the video.</p>
+      </div>
+      <div class="rule">
+        <p class="rule-k mono">works everywhere</p>
+        <p>Any website or upload box. An auto-hiding Dock and multiple displays are fine too.</p>
+      </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section>
-    <h2>Formats</h2>
-    <table>
-      <tr><td>Images</td><td>JPEG, PNG, HEIC, AVIF, TIFF, GIF, BMP, PDF</td></tr>
-      <tr><td>Video</td><td>MP4 (H.264), MP4 (HEVC), MOV (ProRes), animated GIF, audio only</td></tr>
-      <tr><td>Audio</td><td>M4A (AAC, HE-AAC), WAV, AIFF, FLAC, Apple Lossless</td></tr>
-      <tr><td>Documents</td><td>PDF, DOCX, DOC, ODT, RTF, TXT, HTML — from Markdown, Word, ODT, RTF, HTML, TXT</td></tr>
-      <tr><td>PDF</td><td>PNG / JPEG per page, DOCX, ODT, RTF, TXT</td></tr>
-      <tr><td>Fonts</td><td>WOFF2, WOFF, TTF / OTF</td></tr>
-    </table>
-  </section>
+<!-- ============ CONVERT ============ -->
+<section class="sec" id="convert">
+  <div class="wrap">
+    <header class="sec-head reveal">
+      <p class="eyebrow mono">02 / convert</p>
+      <h2>Any file, any format. One wheel.</h2>
+      <p class="sub">Drop a file on the convert wheel and pick a segment. Keep the original (the new file lands next to it) or replace it (the original goes to the Trash). Hold <kbd>⌥</kbd> to flip once.</p>
+    </header>
+    <div class="conv reveal">
+      <div class="conv-tabs" role="tablist" aria-label="Example file">
+        <button role="tab" class="ftab mono" data-type="heic" aria-selected="true">IMG_0464.HEIC</button>
+        <button role="tab" class="ftab mono" data-type="mov" aria-selected="false">clip.MOV</button>
+        <button role="tab" class="ftab mono" data-type="wav" aria-selected="false">voice.WAV</button>
+        <button role="tab" class="ftab mono" data-type="docx" aria-selected="false">notes.DOCX</button>
+        <button role="tab" class="ftab mono" data-type="pdf" aria-selected="false">report.PDF</button>
+        <button role="tab" class="ftab mono" data-type="woff2" aria-selected="false">Brand.WOFF2</button>
+      </div>
+      <div class="conv-stage">
+        <svg id="wheel" class="wheel" viewBox="-170 -170 340 340" role="group" aria-label="Convert wheel"></svg>
+      </div>
+      <div class="conv-out mono" aria-live="polite"><span class="prompt">›</span> <span id="conv-out">pick a format on the wheel</span><span class="caret" aria-hidden="true"></span></div>
+    </div>
 
-  <footer>
-    MIT licensed · <a href="https://github.com/Mocinjay/morphlo">Source on GitHub</a> · Convert engine adapted from <a href="https://github.com/newtonstudios/convert">Convert</a> (MIT)
-  </footer>
+    <div class="ways reveal">
+      <h3 class="ways-h">Five ways to open it</h3>
+      <ol class="ways-list">
+        <li><span class="keys"><kbd>⇧</kbd></span><span><b>Tap Shift mid-drag.</b> A round drop disc pops up right under your cursor.</span></li>
+        <li><span class="keys"><kbd>⌃</kbd><kbd>⌥</kbd><kbd>M</kbd></span><span><b>Open the drop disc anywhere.</b> Both shortcuts can be changed.</span></li>
+        <li><span class="keys"><kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd></span><span><b>Select files in Finder</b> and convert them straight away.</span></li>
+        <li><span class="keys"><kbd class="wide">right-click</kbd></span><span><b>Convert with Morphlo</b> from Finder's Quick Actions.</span></li>
+        <li><span class="keys"><kbd class="ico"><svg aria-label="menu-bar butterfly"><use href="#bfly"/></svg></kbd></span><span><b>Click the butterfly</b> in the menu bar for the drop disc. Right-click it for settings.</span></li>
+      </ol>
+      <figure class="real">
+        <img src="wheel.png" width="460" height="460" loading="lazy" alt="Screenshot of the real Morphlo convert wheel: gray ring of format segments around a dark hub">
+        <figcaption class="mono">the real wheel, in the app</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PRIVACY ============ -->
+<section class="sec" id="privacy">
+  <div class="wrap priv">
+    <div class="priv-copy reveal">
+      <p class="eyebrow mono">03 / privacy</p>
+      <h2>100% local.</h2>
+      <ul class="claims">
+        <li><span class="num mono">01</span><div><b>Never connects to the internet.</b><span>Verified: zero sockets. No auto-updater phoning home.</span></div></li>
+        <li><span class="num mono">02</span><div><b>Nothing uploaded. No accounts, no tracking.</b><span>No analytics, no telemetry, nothing to sign up for.</span></div></li>
+        <li><span class="num mono">03</span><div><b>Only built-in macOS frameworks.</b><span>ImageIO, AVFoundation, Core Audio, PDFKit, TextKit, Photos and on-device Speech. Nothing else to install.</span></div></li>
+      </ul>
+      <p class="fine">Fetching originals from iCloud Photos is optional and off by default. Transcripts, if you turn them on, are made on device.</p>
+    </div>
+    <div class="monitor reveal" aria-label="Illustration of a network monitor showing zero connections">
+      <div class="mon-top mono">
+        <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span>network monitor — Morphlo</span>
+      </div>
+      <div class="mon-stats mono">
+        <div><span class="k">connections</span><span class="v"><span class="dot ok blink"></span>0</span></div>
+        <div><span class="k">bytes out</span><span class="v">0 B</span></div>
+        <div><span class="k">bytes in</span><span class="v">0 B</span></div>
+      </div>
+      <ol class="mon-log mono" id="mon-log" aria-hidden="true"></ol>
+      <div class="mon-foot mono"><span>$ lsof -i -a -c Morphlo</span><span class="dim">(no output)</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FORMATS ============ -->
+<section class="sec" id="formats">
+  <div class="wrap">
+    <header class="sec-head reveal">
+      <p class="eyebrow mono">04 / formats</p>
+      <h2>What turns into what.</h2>
+    </header>
+    <div class="fmt reveal">
+      <article class="fcard"><h3 class="mono">Images</h3><p class="from mono">HEIC, JPEG, PNG, TIFF, RAW…</p><p class="to mono">JPEG · PNG · HEIC · AVIF · TIFF · GIF · BMP · PDF</p></article>
+      <article class="fcard"><h3 class="mono">Video</h3><p class="from mono">MOV, MP4, M4V, 3GP</p><p class="to mono">MP4 (H.264) · MP4 (HEVC) · MOV (ProRes) · animated GIF · audio only</p></article>
+      <article class="fcard"><h3 class="mono">Audio</h3><p class="from mono">M4A, MP3, WAV, AIFF, FLAC, CAF</p><p class="to mono">M4A (AAC) · M4A (HE-AAC) · WAV · AIFF · FLAC · ALAC</p></article>
+      <article class="fcard"><h3 class="mono">Documents</h3><p class="from mono">Markdown, Word, ODT, RTF, HTML, TXT</p><p class="to mono">PDF · DOCX · DOC · ODT · RTF · TXT · HTML</p></article>
+      <article class="fcard"><h3 class="mono">PDF</h3><p class="from mono">PDF</p><p class="to mono">PNG or JPEG per page · DOCX · ODT · RTF · TXT</p></article>
+      <article class="fcard"><h3 class="mono">Fonts</h3><p class="from mono">TTF, OTF, WOFF, WOFF2</p><p class="to mono">WOFF2 · WOFF · TTF/OTF</p></article>
+    </div>
+    <p class="fine reveal">Not offered: MP3 encoding, WebM, MKV, OGG and WebP output. macOS can't encode them natively, and Morphlo doesn't bundle extra encoders.</p>
+    <div class="term cli reveal">
+      <div class="term-top mono"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>command line</span></div>
+<pre class="mono"><code><span class="c"># convert from scripts too</span>
+<span class="p">$</span> /Applications/Morphlo.app/Contents/MacOS/Morphlo --convert-to jpg IMG_0001.HEIC
+<span class="p">$</span> /Applications/Morphlo.app/Contents/MacOS/Morphlo --targets clip.mov
+<span class="p">$</span> /Applications/Morphlo.app/Contents/MacOS/Morphlo --convert IMG_0002.MOV --out ./ai</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============ INSTALL ============ -->
+<section class="sec" id="install">
+  <div class="wrap">
+    <header class="sec-head reveal">
+      <p class="eyebrow mono">05 / install</p>
+      <h2>Up and running in a minute.</h2>
+    </header>
+    <div class="term inst reveal">
+      <div class="term-top mono">
+        <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <div class="itabs" role="tablist" aria-label="Install method">
+          <button role="tab" class="itab mono" id="t-dl" aria-controls="p-dl" aria-selected="true">Download</button>
+          <button role="tab" class="itab mono" id="t-brew" aria-controls="p-brew" aria-selected="false" tabindex="-1">Homebrew</button>
+          <button role="tab" class="itab mono" id="t-npx" aria-controls="p-npx" aria-selected="false" tabindex="-1">npx</button>
+        </div>
+      </div>
+      <div class="ipanel" id="p-dl" role="tabpanel" aria-labelledby="t-dl">
+        <div class="line"><code class="mono"><span class="c"># signed &amp; notarized by Apple: opens with no warnings</span></code></div>
+        <a class="btn btn-primary sm" href="https://github.com/Mocinjay/morphlo/releases/latest/download/Morphlo.dmg"><svg aria-hidden="true"><use href="#i-down"/></svg>Morphlo.dmg</a>
+        <div class="line"><code class="mono"><span class="c"># open it, drag Morphlo to Applications</span></code></div>
+        <p class="un mono">uninstall: drag Morphlo.app to the Trash</p>
+      </div>
+      <div class="ipanel" id="p-brew" role="tabpanel" aria-labelledby="t-brew" hidden>
+        <div class="line"><code class="mono"><span class="p">$</span> brew tap mocinjay/tap &amp;&amp; brew trust mocinjay/tap &amp;&amp; brew install --cask morphlo</code>
+          <button class="copy mono" type="button" data-copy="brew tap mocinjay/tap && brew trust mocinjay/tap && brew install --cask morphlo"><svg aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-lbl">Copy</span></button></div>
+        <p class="un mono">uninstall: brew uninstall --cask morphlo</p>
+      </div>
+      <div class="ipanel" id="p-npx" role="tabpanel" aria-labelledby="t-npx" hidden>
+        <div class="line"><code class="mono"><span class="p">$</span> npx morphlo</code>
+          <button class="copy mono" type="button" data-copy="npx morphlo"><svg aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-lbl">Copy</span></button></div>
+        <div class="line"><code class="mono"><span class="c"># downloads the signed app from GitHub Releases</span></code></div>
+        <p class="un mono">uninstall: npx morphlo uninstall</p>
+      </div>
+    </div>
+    <div class="perms reveal">
+      <div class="perm"><p class="mono k">first launch</p><p>Allow <b>Photos</b> access (Full Access). Morphlo needs it to grab your originals.</p></div>
+      <div class="perm"><p class="mono k">optional</p><p><b>Accessibility</b> to spot AI-chat tabs in browsers and detect the Dock. <b>Speech recognition</b> for transcripts. <b>Finder automation</b> for <span style="white-space:nowrap"><kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd>.</span></p></div>
+      <div class="perm"><p class="mono k">requires</p><p>macOS 14 Sonoma or later, on Apple Silicon or Intel.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section class="sec" id="faq">
+  <div class="wrap faq-wrap">
+    <header class="sec-head reveal">
+      <p class="eyebrow mono">06 / faq</p>
+      <h2>Questions.</h2>
+    </header>
+    <div class="faq reveal">
+      <details><summary>Is it really free?</summary><div class="ans"><p>Yes. Morphlo is free and open source under the MIT license. No trial, no paid tier, no account.</p></div></details>
+      <details><summary>Does it upload anything?</summary><div class="ans"><p>No. Every conversion runs on your Mac with built-in macOS frameworks, and Morphlo never connects to the internet. The only optional network step, fetching originals that live only in iCloud Photos, is done by macOS and is off by default.</p></div></details>
+      <details><summary>Why do Claude and websites reject HEIC?</summary><div class="ans"><p>HEIC is the iPhone's default photo format, but many websites and AI chats only accept JPEG, PNG and friends. Morphlo hands them a full-quality JPEG during the drag, so you never see the error.</p></div></details>
+      <details><summary>Does it change my original files?</summary><div class="ans"><p>Not unless you ask. Drag fixes use a converted copy, and Finder, the Desktop and the Trash always get the original. In the convert wheel, "keep original" puts the new file next to it. "Replace" moves the original to the Trash, so you can still get it back.</p></div></details>
+      <details><summary>What about videos?</summary><div class="ans"><p>Dragging a video out of Photos often gives websites a single still frame. With Morphlo they get the full video, every frame plus audio. You can switch AI chats to receive still frames and a contact sheet instead, and optionally add an on-device transcript.</p></div></details>
+      <details><summary>How do I uninstall?</summary><div class="ans"><p><code class="mono">brew uninstall --cask morphlo</code>, <code class="mono">npx morphlo uninstall</code>, or drag Morphlo.app to the Trash.</p></div></details>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CLOSE ============ -->
+<section class="close" aria-labelledby="close-h">
+  <div class="wrap">
+    <div class="close-in reveal">
+      <img class="close-icon" src="icon.png" width="56" height="56" alt="" loading="lazy">
+      <h2 id="close-h">Never worry about converting again.</h2>
+      <div class="cta">
+        <a class="btn btn-primary" href="https://github.com/Mocinjay/morphlo/releases/latest/download/Morphlo.dmg">
+          <svg aria-hidden="true"><use href="#i-down"/></svg>Download for Mac
+        </a>
+        <button class="btn btn-cmd mono" type="button" data-copy="npx morphlo" aria-label="Copy command: npx morphlo">
+          <span class="dim">$</span> npx morphlo
+          <span class="copy-ico"><svg aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-lbl">Copy</span></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
 </main>
-<script>
-  document.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", async () => {
-    try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = "Copied"; setTimeout(() => (b.textContent = "Copy"), 1400); } catch {}
-  }));
-</script>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <div class="foot-brand">
+      <svg class="bf" aria-hidden="true"><use href="#bfly"/></svg>
+      <span>Morphlo</span>
+      <span class="dim mono">Made for the Mac</span>
+    </div>
+    <p class="mono foot-links">
+      <a href="https://github.com/Mocinjay/morphlo/blob/main/LICENSE">MIT</a>
+      <i>·</i><a href="https://github.com/Mocinjay/morphlo">source on GitHub</a>
+      <i>·</i><span>convert engine adapted from <a href="https://github.com/newtonstudios/convert">Convert</a> (MIT)</span>
+    </p>
+  </div>
+</footer>
+
+<script src="site.js" defer></script>
 </body>
 </html>

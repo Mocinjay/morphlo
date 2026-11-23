@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+
+      - name: Select Xcode 16.4
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.4.app
+          swift --version
+
+      - name: No networking APIs (100% local)
+        run: |
+          set +e
+          grep -rEn 'URLSession|URLRequest|NSURLConnection|NWConnection|NWBrowser|import (Network|WebKit|SafariServices)\b|CFSocket|CFStream|WKWebView|getaddrinfo|\bsocket\(|/usr/bin/(curl|nc|ssh|scp|sftp|ftp)' Sources
+          rc=$?
+          set -e
+          if [ $rc -eq 0 ]; then echo '::error::Networking API found in Sources/. Morphlo must stay 100% local.'; exit 1; fi
+          if [ $rc -ne 1 ]; then echo "::error::grep failed (rc=$rc)"; exit 1; fi
+          echo 'No networking APIs found.'
+
+      - name: Build (release, universal)
+        run: swift build -c release --arch arm64 --arch x86_64

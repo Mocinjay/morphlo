@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400" role="img" aria-label="The Morphlo convert wheel for IMG_0464.HEIC: a ring of formats around the file name — JPEG, PNG, HEIC, AVIF, TIFF, GIF, BMP and PDF">
+  <defs>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="10"/>
+      <feOffset dy="8" result="o"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.45"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <circle cx="200" cy="200" r="160" fill="#0a0a0a"/>
+  </g>
+  <path d="M138.77 52.18A160 160 0 0 1 261.23 52.18L228.32 131.63A74 74 0 0 0 171.68 131.63Z" fill="#404040"><animate attributeName="fill" values="#404040;#262626;#404040" keyTimes="0;0.1250;1" dur="9.6s" calcMode="discrete" repeatCount="indefinite"/></path>
+  <path d="M261.23 52.18A160 160 0 0 1 347.82 138.77L268.37 171.68A74 74 0 0 0 228.32 131.63Z" fill="#262626"><animate attributeName="fill" values="#262626;#404040;#262626" keyTimes="0;0.1250;0.2500" dur="9.6s" calcMode="discrete" repeatCount="indefinite"/></path>
+  <path d="M347.82 138.77A160 160 0 0 1 347.82 261.23L268.37 228.32A74 74 0 0 0 268.37 171.68Z" fill="#262626"><animate attributeName="fill" values="#262626;#404040;#262626" keyTimes="0;0.2500;0.3750" dur="9.6s" calcMode="discrete" repeatCount="indefinite"/></path>
+  <path d="M347.82 261.23A160 160 0 0 1 261.23 347.82L228.32 268.37A74 74 0 0 0 268.37 228.32Z" fill="#262626"><animate attributeName="fill" values="#262626;#404040;#262626" keyTimes="0;0.3750;0.5000" dur="9.6s" calcMode="discrete" repeatCount="indefinite"/></path>
+  <path d="M261.23 347.82A160 160 0 0 1 138.77 347.82L171.68 268.37A74 74 0 0 0 228.32 268.37Z" fill="#262626"><animate attributeName="fill" values="#262626;#404040;#262626" keyTimes="0;0.5000;0.6250" dur="9.6s" calcMode="discrete" repeatCount="indefinite"/></path>
+  <path d="M138.77 347.82A160 160 0 0 1 52.18 261.23L131.63 228.32A74 74 0 0 0 171.68 268.37Z" fill="#262626"><animate attributeName="fill" values="#262626;#404040;#262626" keyTimes="0;0.6250;0.7500" dur="9.6s" calcMode="discrete" repeatCount="indefinite"/></path>
+  <path d="M52.18 261.23A160 160 0 0 1 52.18 138.77L131.63 171.68A74 74 0 0 0 131.63 228.32Z" fill="#262626"><animate attributeName="fill" values="#262626;#404040;#262626" keyTimes="0;0.7500;0.8750" dur="9.6s" calcMode="discrete" repeatCount="indefinite"/></path>
+  <path d="M52.18 138.77A160 160 0 0 1 138.77 52.18L171.68 131.63A74 74 0 0 0 131.63 171.68Z" fill="#262626"><animate attributeName="fill" values="#262626;#404040;#262626" keyTimes="0;0.8750;1.0000" dur="9.6s" calcMode="discrete" repeatCount="indefinite"/></path>
+  <line x1="171.68" y1="131.63" x2="138.77" y2="52.18" stroke="#525252" stroke-width="1"/>
+  <line x1="228.32" y1="131.63" x2="261.23" y2="52.18" stroke="#525252" stroke-width="1"/>
+  <line x1="268.37" y1="171.68" x2="347.82" y2="138.77" stroke="#525252" stroke-width="1"/>
+  <line x1="268.37" y1="228.32" x2="347.82" y2="261.23" stroke="#525252" stroke-width="1"/>
+  <line x1="228.32" y1="268.37" x2="261.23" y2="347.82" stroke="#525252" stroke-width="1"/>
+  <line x1="171.68" y1="268.37" x2="138.77" y2="347.82" stroke="#525252" stroke-width="1"/>
+  <line x1="131.63" y1="228.32" x2="52.18" y2="261.23" stroke="#525252" stroke-width="1"/>
+  <line x1="131.63" y1="171.68" x2="52.18" y2="138.77" stroke="#525252" stroke-width="1"/>
+  <g font-family="Geist, -apple-system, 'SF Pro Text', Helvetica, Arial, sans-serif" font-size="13" font-weight="600" text-anchor="middle" letter-spacing="0.2">
+    <text x="200.00" y="87.50" fill="#fafafa">JPEG<animate attributeName="fill" values="#fafafa;#a3a3a3;#fafafa" keyTimes="0;0.1250;1" dur="9.6s" calcMode="discrete" repeatCount="indefinite"/></text>
+    <text x="282.73" y="121.77" fill="#a3a3a3">PNG<animate attributeName="fill" values="#a3a3a3;#fafafa;#a3a3a3" keyTimes="0;0.1250;0.2500" dur="9.6s" calcMode="discrete" repeatCount="indefinite"/></text>
+    <text x="317.00" y="204.50" fill="#a3a3a3">HEIC<animate attributeName="fill" values="#a3a3a3;#fafafa;#a3a3a3" keyTimes="0;0.2500;0.3750" dur="9.6s" calcMode="discrete" repeatCount="indefinite"/></text>
+    <text x="282.73" y="287.23" fill="#a3a3a3">AVIF<animate attributeName="fill" values="#a3a3a3;#fafafa;#a3a3a3" keyTimes="0;0.3750;0.5000" dur="9.6s" calcMode="discrete" repeatCount="indefinite"/></text>
+    <text x="200.00" y="321.50" fill="#a3a3a3">TIFF<animate attributeName="fill" values="#a3a3a3;#fafafa;#a3a3a3" keyTimes="0;0.5000;0.6250" dur="9.6s" calcMode="discrete" repeatCount="indefinite"/></text>
+    <text x="117.27" y="287.23" fill="#a3a3a3">GIF<animate attributeName="fill" values="#a3a3a3;#fafafa;#a3a3a3" keyTimes="0;0.6250;0.7500" dur="9.6s" calcMode="discrete" repeatCount="indefinite"/></text>
+    <text x="83.00" y="204.50" fill="#a3a3a3">BMP<animate attributeName="fill" values="#a3a3a3;#fafafa;#a3a3a3" keyTimes="0;0.7500;0.8750" dur="9.6s" calcMode="discrete" repeatCount="indefinite"/></text>
+    <text x="117.27" y="121.77" fill="#a3a3a3">PDF<animate attributeName="fill" values="#a3a3a3;#fafafa;#a3a3a3" keyTimes="0;0.8750;1.0000" dur="9.6s" calcMode="discrete" repeatCount="indefinite"/></text>
+  </g>
+  <circle cx="200" cy="200" r="64" fill="#171717"/>
+  <text x="200" y="201" text-anchor="middle" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace" font-size="11.5" fill="#fafafa">IMG_0464.HEIC</text>
+  <text x="200" y="219" text-anchor="middle" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace" font-size="9.5" fill="#737373">→ pick a format</text>
+</svg>
