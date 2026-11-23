@@ -634,10 +634,15 @@ enum WOFF2 {
             flags.append(UInt8(curve + 10 + ((x & 0xF00) >> 7) + xSign))
             bytes.append(UInt8(x & 0xFF))
         } else if x < 65, y < 65 {
-            flags.append(UInt8(curve + 20 + ((x - 1) & 0x30) + (((y - 1) & 0x30) >> 2) + signs))
+            let xBits: Int = (x - 1) & 0x30
+            let yBits: Int = ((y - 1) & 0x30) >> 2
+            flags.append(UInt8(curve + 20 + xBits + yBits + signs))
             bytes.append(UInt8((((x - 1) & 0x0F) << 4) | ((y - 1) & 0x0F)))
         } else if x < 769, y < 769 {
-            flags.append(UInt8(curve + 84 + 12 * (((x - 1) & 0x300) >> 8) + (((y - 1) & 0x300) >> 6) + signs))
+            let xHigh: Int = ((x - 1) & 0x300) >> 8
+            let yHigh: Int = ((y - 1) & 0x300) >> 6
+            let flag: Int = curve + 84 + 12 * xHigh + yHigh + signs
+            flags.append(UInt8(flag))
             bytes.append(UInt8((x - 1) & 0xFF))
             bytes.append(UInt8((y - 1) & 0xFF))
         } else if x < 4096, y < 4096 {
