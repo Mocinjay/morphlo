@@ -8,6 +8,10 @@ Morphlo is a free menu-bar app for your Mac:
   - Or right-click a file in Finder → **Convert with Morphlo**.
   - Or select a file and press **⌥⌘K**.
 
+### New in 0.1.4
+- **A welcome tour.** The first time you open Morphlo, four short slides show what it does: drag a HEIC or a video straight into any chat or upload box, convert any file with the wheel, and everything stays on your Mac. Replay it anytime: right-click 🦋 → **Welcome Tour…**
+- macOS asks for Photos access after the tour, instead of on top of it.
+
 ### New in 0.1.3
 - **100% local by default.** Morphlo no longer asks Photos to fetch originals from iCloud unless you turn it on (right-click 🦋 → "Get originals from iCloud Photos when needed"). Out of the box, nothing ever touches the network.
 

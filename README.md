@@ -221,7 +221,7 @@ Needs a Swift 6 toolchain (Xcode 16 or later).
 
 ```sh
 ./scripts/build-app.sh                 # universal build/Morphlo.app, signed with your best local identity
-VERSION=0.1.3 ./scripts/release.sh     # Developer ID sign, notarize, staple, zip (see the script header)
+VERSION=0.1.4 ./scripts/release.sh     # Developer ID sign, notarize, staple, zip (see the script header)
 ```
 
 ## Troubleshooting

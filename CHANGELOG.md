@@ -6,6 +6,21 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-11-23
+
+### Added
+
+- **Welcome tour.** On first launch Morphlo opens a four-slide tour, each slide
+  with a short silent clip: the HEIC and video problem, the zero-touch fix, the
+  convert wheel, and 100% local. Next / Back / dots, ← → Return and Esc work.
+  Replay it from the menu (right-click 🦋 → "Welcome Tour…"). The text follows
+  your settings (shortcuts, video mode, iCloud originals, replace original).
+
+### Changed
+
+- On first launch the macOS Photos permission prompt now appears after the
+  tour is closed, so it never covers the tour.
+
 ## [0.1.3] - 2026-11-22
 
 ### Changed
@@ -84,7 +99,8 @@ First public release.
 
 Pre-releases (such as the unnotarized `v0.1.0-beta.1` test build) are not listed.
 
-[Unreleased]: https://github.com/Mocinjay/morphlo/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/Mocinjay/morphlo/compare/v0.1.4...HEAD
+[0.1.4]: https://github.com/Mocinjay/morphlo/releases/tag/v0.1.4
 [0.1.3]: https://github.com/Mocinjay/morphlo/releases/tag/v0.1.3
 [0.1.2]: https://github.com/Mocinjay/morphlo/releases/tag/v0.1.2
 [0.1.1]: https://github.com/Mocinjay/morphlo/releases/tag/v0.1.1

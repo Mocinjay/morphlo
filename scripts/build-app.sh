@@ -17,6 +17,7 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN_DIR/Morphlo" "$APP/Contents/MacOS/Morphlo"
 sed -e "s/__VERSION__/$VERSION/" -e "s/__BUILD__/$BUILD/" Resources/Info.plist > "$APP/Contents/Info.plist"
 [ -f Resources/AppIcon.icns ] && cp Resources/AppIcon.icns "$APP/Contents/Resources/"
+[ -d Resources/Onboarding ] && cp -R Resources/Onboarding "$APP/Contents/Resources/" # welcome-tour clips
 
 # Pick the best signing identity available: Developer ID > Apple Development > ad-hoc.
 if [ -z "${SIGN_IDENTITY:-}" ]; then

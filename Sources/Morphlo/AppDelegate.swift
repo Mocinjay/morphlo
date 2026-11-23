@@ -72,11 +72,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
             self?.autoFix.dragEnded()
             self?.shelf.dragEnded()
         }
-        if Settings.autoFix {
-            Task {
-                let ok = await PhotoLibrary.requestAccess()
-                Log.write("Photos access: \(ok ? "granted" : "not granted") (status \(PhotoLibrary.status.rawValue))")
-            }
+        // First launch: the welcome tour, then the Photos prompt (so it never covers the tour).
+        if Onboarding.isDone {
+            requestPhotosAccess()
+        } else {
+            Onboarding.shared.onFinish = { [weak self] in self?.requestPhotosAccess() }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { Onboarding.shared.show() }
         }
         dragWatcher.start()
         clipboard.start()
@@ -90,6 +91,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         if convertHotKey == nil { Log.write("⌥⌘K couldn't be registered (another app owns it); use the menu or Finder's Quick Action") }
         Timer.scheduledTimer(withTimeInterval: 3600, repeats: true) { _ in
             DispatchQueue.global(qos: .utility).async { WorkDir.cleanOld() }
+        }
+    }
+
+    private func requestPhotosAccess() {
+        guard Settings.autoFix else { return }
+        Task {
+            let ok = await PhotoLibrary.requestAccess()
+            Log.write("Photos access: \(ok ? "granted" : "not granted") (status \(PhotoLibrary.status.rawValue))")
         }
     }
 
@@ -183,6 +192,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
 
         add(menu, "Launch at login", #selector(toggleLogin), on: SMAppService.mainApp.status == .enabled)
         add(menu, "Open log", #selector(openLog))
+        add(menu, "Welcome Tour…", #selector(showWelcome))
         add(menu, "About Morphlo \(Self.version)", #selector(about))
         add(menu, "Quit Morphlo", #selector(quit), key: "q")
     }
@@ -252,6 +262,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
             .credits: NSAttributedString(string: "Drag photos and videos from Photos into Claude (or any app) without HEIC errors or first-frame-only videos. Free and open source."),
         ])
     }
+
+    @objc private func showWelcome() { Onboarding.shared.show() }
 
     @objc private func quit() { NSApp.terminate(nil) }
 
