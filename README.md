@@ -114,7 +114,7 @@ Every format a file can become, in a ring around your cursor. Pick one and the c
 | **Anywhere** | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>M</kbd> opens the drop disc where your cursor is. |
 | **Finder selection** | Select files and press <kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd>. |
 | **Right-click** | Right-click files in Finder → **Quick Actions** (or **Services**) → **Convert with Morphlo**. |
-| **Menu bar** | Click the butterfly to open the drop disc. Right-click it for settings and **Convert a File…** |
+| **Menu bar** | Click the butterfly to open the drop disc. It stays open while you find a file; drag its center to move it, click the butterfly again (or press Esc) to close it. Right-click the butterfly for settings and **Convert a File…** |
 | **App icon / shelf** | Drop files on Morphlo's app icon, or click any file on Morphlo's shelf. |
 
 Both shortcuts can be changed under right-click the menu-bar butterfly → **Shortcuts**.
@@ -221,7 +221,7 @@ Needs a Swift 6 toolchain (Xcode 16 or later).
 
 ```sh
 ./scripts/build-app.sh                 # universal build/Morphlo.app, signed with your best local identity
-VERSION=0.1.4 ./scripts/release.sh     # Developer ID sign, notarize, staple, zip (see the script header)
+VERSION=0.1.5 ./scripts/release.sh     # Developer ID sign, notarize, staple, zip (see the script header)
 ```
 
 ## Troubleshooting

@@ -538,4 +538,166 @@
       }
     }
   }
+
+  /* ---------- formats explorer: what turns into what (data from `Morphlo --targets`) ---------- */
+  {
+    const root = document.getElementById('fx');
+    if (root) {
+      const q = $('#fx-q', root), groupsEl = $('#fx-groups', root), fileEl = $('#fx-file', root), kindEl = $('#fx-kind', root);
+      const list = $('#fx-targets', root), msg = $('#fx-msg', root), cmd = $('#fx-cmd', root), copyBtn = $('#fx-copy', root);
+      const T = {
+        image: [['jpg', 'JPEG'], ['png', 'PNG'], ['heic', 'HEIC'], ['avif', 'AVIF'], ['tiff', 'TIFF'], ['gif-img', 'GIF'], ['bmp', 'BMP'], ['pdf-img', 'PDF']],
+        video: [['mp4-h264', 'MP4', 'H.264'], ['mp4-hevc', 'MP4', 'HEVC'], ['mov-prores', 'MOV', 'ProRes'], ['gif', 'GIF', 'animated'],
+                ['m4a', 'M4A', 'audio only'], ['wav', 'WAV', 'audio only'], ['flac', 'FLAC', 'audio only'], ['aiff', 'AIFF', 'audio only'], ['alac', 'ALAC', 'audio only'], ['he-aac', 'M4A', 'HE-AAC audio']],
+        audio: [['m4a', 'M4A', 'AAC'], ['wav', 'WAV'], ['flac', 'FLAC'], ['aiff', 'AIFF'], ['alac', 'ALAC', 'lossless'], ['he-aac', 'M4A', 'HE-AAC']],
+        document: [['pdf-doc', 'PDF'], ['docx', 'DOCX', 'Word'], ['doc', 'DOC', 'Word 97'], ['odt', 'ODT'], ['rtf', 'RTF'], ['txt', 'TXT'], ['html', 'HTML']],
+        pdf: [['pdf-png', 'PNG', 'per page'], ['pdf-jpg', 'JPEG', 'per page'], ['pdf-docx', 'DOCX', 'text only'], ['pdf-odt', 'ODT', 'text only'], ['pdf-rtf', 'RTF', 'text only'], ['pdf-txt', 'TXT']],
+        font: [['font-woff2', 'WOFF2', 'web'], ['font-woff', 'WOFF', 'web'], ['font-desktop', 'TTF/OTF', 'desktop']]
+      };
+      const KIND = {};
+      const add = (k, exts) => exts.split(' ').forEach((e) => { KIND[e] = k; });
+      add('image', 'heic heif heics jpg jpeg png tiff tif gif bmp webp avif psd dng cr2 cr3 nef arw raf orf rw2 jp2 ico icns tga exr');
+      add('video', 'mov mp4 m4v 3gp 3g2 qt');
+      add('audio', 'mp3 m4a m4b wav wave aif aiff aifc flac caf aac ac3 amr');
+      add('document', 'md markdown docx doc odt rtf html htm txt webarchive');
+      add('pdf', 'pdf');
+      add('font', 'ttf otf ttc otc woff woff2');
+      const SAME = { jpg: 'jpg', jpeg: 'jpg', png: 'png', heic: 'heic', heif: 'heic', avif: 'avif', tif: 'tiff', tiff: 'tiff', gif: 'gif-img', bmp: 'bmp',
+        mp4: 'mp4-h264', m4v: 'mp4-h264', mov: 'mov-prores', qt: 'mov-prores', m4a: 'm4a', wav: 'wav', wave: 'wav', flac: 'flac', aif: 'aiff', aiff: 'aiff', aifc: 'aiff',
+        docx: 'docx', doc: 'doc', odt: 'odt', rtf: 'rtf', txt: 'txt', html: 'html', htm: 'html', woff: 'font-woff', woff2: 'font-woff2', ttf: 'font-desktop', otf: 'font-desktop' };
+      const NO = { webm: 'WebM', mkv: 'MKV', avi: 'AVI', wmv: 'WMV', flv: 'FLV', ogg: 'OGG', opus: 'Opus', wma: 'WMA' };
+      const BASE = { image: 'IMG_0464', video: 'clip', audio: 'voice', document: 'notes', pdf: 'report', font: 'Brand' };
+      const GROUPS = [['images', 'heic jpeg png tiff gif webp avif psd raw'], ['video', 'mov mp4 m4v 3gp'], ['audio', 'mp3 m4a wav aiff flac aac'],
+        ['docs', 'docx md odt rtf html txt'], ['pdf', 'pdf'], ['fonts', 'ttf otf woff woff2']];
+      const ALIAS = { raw: 'dng', word: 'docx' };
+      // The wheel's first pick for each kind (Targets.preferred in the app).
+      const PREF = { audio: ['m4a', 'wav', 'flac'], video: ['mp4-h264', 'mov-prores'], image: ['jpg', 'png'], pdf: ['pdf-png'], document: ['pdf-doc', 'docx'], font: ['font-woff2', 'font-desktop'] };
+      const live = document.getElementById('fx-live');
+      let liveT;
+      const say = (text) => { clearTimeout(liveT); liveT = setTimeout(() => { if (live) live.textContent = text; }, 400); };
+
+      GROUPS.forEach(([name, exts]) => {
+        const g = document.createElement('div');
+        g.className = 'fx-g';
+        g.setAttribute('role', 'group');
+        g.setAttribute('aria-label', name);
+        const label = document.createElement('span');
+        label.className = 'fx-k mono';
+        label.textContent = name;
+        const chips = document.createElement('div');
+        chips.className = 'fx-chips';
+        exts.split(' ').forEach((e) => {
+          const b = document.createElement('button');
+          b.type = 'button'; b.className = 'fx-chip'; b.textContent = e.toUpperCase(); b.dataset.ext = e;
+          b.setAttribute('aria-pressed', 'false');
+          b.addEventListener('click', () => { q.value = e; show(e); });
+          chips.appendChild(b);
+        });
+        g.append(label, chips);
+        groupsEl.appendChild(g);
+      });
+
+      const PATH = '/Applications/Morphlo.app/Contents/MacOS/Morphlo';
+      const quote = (f) => (/^[\w.\-]+$/.test(f) ? f : "'" + f.replace(/'/g, "'\\''") + "'");
+      const current = { file: '', id: '' };
+      function setCmd() {
+        const line = `${PATH} --convert-to ${current.id} ${quote(current.file)}`;
+        cmd.textContent = '';
+        const p = document.createElement('span'); p.className = 'p'; p.textContent = '$';
+        const id = document.createElement('b'); id.textContent = current.id;
+        cmd.append(p, 'Morphlo --convert-to ', id, ' ' + quote(current.file)); // short on screen, full path when copied
+        cmd.title = line;
+        copyBtn.dataset.copy = line;
+        copyBtn.setAttribute('aria-label', 'Copy command: ' + line);
+      }
+
+      function show(raw, fileName) {
+        let ext = String(raw || '').trim().toLowerCase();
+        if (ext.includes('.')) ext = ext.slice(ext.lastIndexOf('.') + 1);
+        ext = ext.replace(/[^a-z0-9]/g, '');
+        const lookup = ALIAS[ext] || ext;
+        $$('.fx-chip', groupsEl).forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.ext === ext)));
+        list.textContent = '';
+        msg.hidden = true;
+        kindEl.classList.toggle('bad', false);
+        if (!ext) {
+          root.dataset.state = 'none';
+          fileEl.textContent = 'your file';
+          kindEl.textContent = '?';
+          msg.hidden = false;
+          msg.textContent = 'Type an extension like heic, mov or docx.';
+          return;
+        }
+        const kind = KIND[lookup];
+        const file = fileName || `${kind ? BASE[kind] : 'file'}.${kind ? lookup : ext}`;
+        fileEl.textContent = file;
+        if (!kind) {
+          root.dataset.state = 'none';
+          const known = !!NO[ext] || ['pages', 'key', 'numbers'].includes(ext);
+          kindEl.textContent = known ? 'not supported' : 'not listed';
+          kindEl.classList.toggle('bad', known);
+          msg.hidden = false;
+          msg.textContent = NO[ext]
+            ? `Morphlo can't open ${NO[ext]} files. It only uses the decoders built into macOS, which can't read ${NO[ext]}.`
+            : ['pages', 'key', 'numbers'].includes(ext)
+              ? 'Export it from that app first (File → Export To → Word or PDF), then Morphlo can convert the export.'
+              : `.${ext} isn't on this list. If macOS can open it as an image, audio, video, document or font, Morphlo can probably convert it: drop it on the wheel to see.`;
+          say(`${file}: ${msg.textContent}`);
+          return;
+        }
+        root.dataset.state = 'ok';
+        kindEl.textContent = kind;
+        const same = SAME[lookup];
+        const others = T[kind].filter((t) => t[0] !== same);
+        const pick = others.find((t) => t[0] === (PREF[kind] || []).find((id) => others.some((o) => o[0] === id)));
+        const targets = (pick ? [pick].concat(others.filter((t) => t !== pick)) : others).concat(T[kind].filter((t) => t[0] === same));
+        current.file = file;
+        current.id = targets[0][0];
+        targets.forEach((t, i) => {
+          const li = document.createElement('li');
+          li.className = 'fx-t' + (t[0] === same ? ' same' : '');
+          li.style.animationDelay = (i * 35) + 'ms';
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = t[1];
+          if (t[2] || t[0] === same) {
+            const sm = document.createElement('small');
+            sm.textContent = t[0] === same ? 'same format' : t[2];
+            b.appendChild(sm);
+          }
+          b.setAttribute('aria-pressed', String(i === 0));
+          b.addEventListener('click', () => {
+            $$('.fx-t button', list).forEach((x) => x.setAttribute('aria-pressed', 'false'));
+            b.setAttribute('aria-pressed', 'true');
+            current.id = t[0];
+            setCmd();
+          });
+          li.appendChild(b);
+          list.appendChild(li);
+        });
+        setCmd();
+        say(`${file} can become ${targets.filter((t) => t[0] !== same).map((t) => t[1] + (t[2] ? ' ' + t[2] : '')).join(', ')}.`);
+      }
+
+      // A full file name ("My Photo.HEIC") is used as typed; a bare extension gets an example name.
+      q.addEventListener('input', () => { const v = q.value.trim(); show(v, /^[^.].*\.[A-Za-z0-9]+$/.test(v) ? v : undefined); });
+      // Drop a file on the box: only its name is read. The file never leaves the browser.
+      const hasFiles = (e) => e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
+      ['dragenter', 'dragover'].forEach((ev) => root.addEventListener(ev, (e) => {
+        if (hasFiles(e)) { e.preventDefault(); root.classList.add('over'); }
+      }));
+      root.addEventListener('dragleave', (e) => { if (!root.contains(e.relatedTarget)) root.classList.toggle('over', false); });
+      root.addEventListener('drop', (e) => {
+        root.classList.toggle('over', false);
+        const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (!f) return;
+        e.preventDefault();
+        q.value = f.name.includes('.') ? f.name.slice(f.name.lastIndexOf('.') + 1).toLowerCase() : f.name;
+        show(f.name, f.name);
+      });
+      // Anywhere else on the page, a stray file drop must not open the file and leave the site.
+      ['dragover', 'drop'].forEach((ev) => document.addEventListener(ev, (e) => { if (hasFiles(e)) e.preventDefault(); }));
+      show(q.value);
+    }
+  }
 })();

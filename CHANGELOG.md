@@ -6,6 +6,22 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-11-23
+
+### Changed
+
+- **The drop disc stays open.** Opened from the menu-bar butterfly or ⌃⌥M,
+  it no longer closes on outside clicks. It closes on the butterfly again,
+  the shortcut again, Esc, or a right-click. While the convert wheel is open
+  it steps aside, and it comes back when the wheel closes.
+- **Move the disc** by dragging its center. Tapping ⇧ mid-drag while it's
+  open brings it under the cursor.
+
+### Fixed
+
+- Pressing on one of Morphlo's own windows (like dragging the disc) is no
+  longer mistaken for a drag out of the Dock.
+
 ## [0.1.4] - 2026-11-23
 
 ### Added
@@ -99,7 +115,8 @@ First public release.
 
 Pre-releases (such as the unnotarized `v0.1.0-beta.1` test build) are not listed.
 
-[Unreleased]: https://github.com/Mocinjay/morphlo/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/Mocinjay/morphlo/compare/v0.1.5...HEAD
+[0.1.5]: https://github.com/Mocinjay/morphlo/releases/tag/v0.1.5
 [0.1.4]: https://github.com/Mocinjay/morphlo/releases/tag/v0.1.4
 [0.1.3]: https://github.com/Mocinjay/morphlo/releases/tag/v0.1.3
 [0.1.2]: https://github.com/Mocinjay/morphlo/releases/tag/v0.1.2

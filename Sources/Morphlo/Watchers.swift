@@ -95,6 +95,14 @@ final class DragWatcher {
     /// point. Without Accessibility, or if the Dock doesn't answer, assume yes: the sniffer is
     /// invisible and only reacts to real drags.
     private static func dockWindow(at point: NSPoint) -> Bool {
+        // A press that lands on one of Morphlo's own windows (e.g. moving the drop disc) is never a
+        // Dock drag. Ask for the topmost window at the point: transparent corners pass clicks through.
+        let top = NSWindow.windowNumber(at: point, belowWindowWithWindowNumber: 0)
+        if let own = NSApp.windows.first(where: { $0.isVisible && $0.windowNumber == top }) {
+            // The drop disc is round: its square frame's corners belong to whatever is underneath.
+            guard let disc = own as? DropDiscPanel else { return false }
+            if disc.covers(point) { return false }
+        }
         guard let primary = NSScreen.screens.first,
               let dock = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.dock").first
         else { return false }

@@ -11,19 +11,16 @@ final class DropDisc {
 
     var isVisible: Bool { panel?.isVisible ?? false }
 
+    /// Opened from the menu-bar butterfly or the shortcut, the disc is "pinned": it stays up while
+    /// you go find a file, steps aside while the wheel is converting, and comes back afterwards.
+    /// It closes only when you click the butterfly again, press the shortcut again, press Esc, or
+    /// right-click it. Drag it by its center to move it.
     func toggle(under button: NSStatusBarButton?) {
-        if let p = panel, p.isVisible { p.close(); return }
-        let p = DropDiscPanel()
-        p.onClose = { [weak self] in self?.panel = nil }
-        p.disc.onPick = { [weak self, weak p] kind in
-            p?.close()
-            self?.onPickFiles?(kind)
+        if let p = panel {
+            if p.isAside { p.comeBack() } else { p.close() } // hidden behind the wheel: bring it back
+            return
         }
-        p.disc.onFiles = { [weak p] urls, center in
-            p?.close()
-            FormatWheel.shared.present(for: urls, at: center)
-        }
-        panel = p
+        let p = makePanel(pinned: true)
         p.show(under: button)
     }
 
@@ -31,25 +28,64 @@ final class DropDisc {
 
     /// Opens the disc centered on a point (the cursor), e.g. from a shortcut or mid-drag.
     func show(at point: NSPoint, duringDrag: Bool) {
-        Log.write("Drop disc: show at \(Int(point.x)),\(Int(point.y)) duringDrag=\(duringDrag) alreadyVisible=\(panel?.isVisible ?? false)")
-        if let p = panel, p.isVisible {
-            if duringDrag { return } // already up for this drag
-            p.close()
+        Log.write("Drop disc: show at \(Int(point.x)),\(Int(point.y)) duringDrag=\(duringDrag) open=\(panel != nil)")
+        if let p = panel {
+            if p.isAside {
+                p.comeBack()              // it was hidden behind the wheel: bring it back, to you
+                p.move(centeredOn: point)
+            } else if duringDrag && p.pinned && p.isVisible {
+                p.move(centeredOn: point) // tapping the trigger mid-drag brings the pinned disc to you
+            } else {
+                p.close()                 // the trigger again, or the shortcut again: put it away
+            }
             return
         }
-        let p = DropDiscPanel()
+        let p = makePanel(pinned: !duringDrag)
         p.openedDuringDrag = duringDrag
-        p.onClose = { [weak self] in self?.panel = nil }
-        p.disc.onPick = { [weak self, weak p] kind in
-            p?.close()
-            self?.onPickFiles?(kind)
+        p.show(at: point)
+    }
+
+    private func makePanel(pinned: Bool) -> DropDiscPanel {
+        let p = DropDiscPanel()
+        p.pinned = pinned
+        p.onClose = { [weak self, weak p] in
+            guard let self, self.panel === p else { return }
+            self.panel = nil
         }
-        p.disc.onFiles = { [weak p] urls, center in
-            p?.close()
-            FormatWheel.shared.present(for: urls, at: center)
+        p.disc.onPick = { [weak self, weak p] kind in
+            guard let self else { return }
+            // Only a disc that is still the open one steps aside and comes back.
+            if let p, p.pinned, self.panel === p {
+                p.stepAside()
+                self.onPickFiles?(kind)
+                if !FormatWheel.shared.isVisible { p.comeBack() } // picker cancelled
+            } else {
+                p?.close()
+                self.onPickFiles?(kind)
+            }
+        }
+        p.disc.onFiles = { [weak self, weak p] urls, center in
+            // The disc may have been closed while a Photos original was still downloading:
+            // the files still go to the wheel, but only the live disc steps aside / comes back.
+            if let p, p.pinned, self?.panel === p {
+                p.stepAside()
+                FormatWheel.shared.present(for: urls, at: center)
+                if !FormatWheel.shared.isVisible { p.comeBack() } // nothing convertible
+            } else {
+                p?.close()
+                FormatWheel.shared.present(for: urls, at: center)
+            }
         }
         panel = p
-        p.show(at: point)
+        return p
+    }
+
+    /// The wheel closed: a pinned disc that stepped aside for it comes back.
+    func wheelClosed() {
+        DispatchQueue.main.async { [weak self] in
+            guard let p = self?.panel, p.isAside, !FormatWheel.shared.isVisible else { return }
+            p.comeBack()
+        }
     }
 
     /// A drag ended: a disc that popped up for it closes unless the file was dropped on it.
@@ -68,6 +104,10 @@ final class DropDiscPanel: NSPanel {
     let disc = DropDiscView(frame: NSRect(x: 0, y: 0, width: DropDiscPanel.size, height: DropDiscPanel.size))
     var onClose: (() -> Void)?
     var openedDuringDrag = false
+    /// Stays up until it's explicitly closed (see `DropDisc`); otherwise a click elsewhere closes it.
+    var pinned = false { didSet { disc.pinned = pinned } }
+    /// Hidden while the wheel converts what was dropped on it; comes back when the wheel closes.
+    private(set) var isAside = false
 
     init() {
         super.init(contentRect: NSRect(x: 0, y: 0, width: Self.size, height: Self.size),
@@ -130,7 +170,39 @@ final class DropDiscPanel: NSPanel {
         }
         NSAnimationContext.runAnimationGroup { $0.duration = 0.1; animator().alphaValue = 1 }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in self?.invalidateShadow() }
-        watchOutsideClicks()
+        if !pinned { watchOutsideClicks() }
+    }
+
+    /// Whether a screen point is on the round disc itself (not its transparent corners).
+    func covers(_ point: NSPoint) -> Bool {
+        hypot(point.x - frame.midX, point.y - frame.midY) <= DropDiscView.outerRadius
+    }
+
+    /// Recenters the (already visible) disc on a point, kept on screen.
+    func move(centeredOn point: NSPoint) {
+        var origin = NSPoint(x: point.x - Self.size / 2, y: point.y - Self.size / 2)
+        if let v = (NSScreen.screens.first { NSMouseInRect(point, $0.frame, false) } ?? NSScreen.main)?.visibleFrame {
+            origin.x = min(max(origin.x, v.minX + 4), v.maxX - Self.size - 4)
+            origin.y = min(max(origin.y, v.minY + 4), v.maxY - Self.size - 4)
+        }
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? 0 : 0.18
+            ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            animator().setFrameOrigin(origin)
+        }
+    }
+
+    func stepAside() {
+        isAside = true
+        orderOut(nil)
+    }
+
+    func comeBack() {
+        guard isAside else { return }
+        isAside = false
+        alphaValue = 0
+        makeKeyAndOrderFront(nil) // key again, so Esc closes it (a non-activating panel doesn't activate the app)
+        NSAnimationContext.runAnimationGroup { $0.duration = 0.15; animator().alphaValue = 1 }
     }
 
     // It stays open while you go grab a file: clicking into Finder/Photos to start a drag must
@@ -157,6 +229,8 @@ final class DropDiscPanel: NSPanel {
     override func cancelOperation(_ sender: Any?) { close() }
 
     override func close() {
+        isAside = false
+        if disc.pinned { NSCursor.arrow.set() } // it may close under the pointer (open-hand cursor)
         monitors.forEach { NSEvent.removeMonitor($0) }
         monitors.removeAll()
         super.close()
@@ -175,9 +249,14 @@ final class DropDiscView: NSView {
     private var dragKind: MediaKind? { didSet { needsDisplay = true } }
     private var loading = false { didSet { needsDisplay = true } }
     var isBusy: Bool { loading || isTargeted }
+    /// Pinned discs can be moved by dragging the center, and say so on hover.
+    var pinned = false
+    private var downEvent: NSEvent?
+    private var movedWindow = false
 
     // Same proportions and palette as the convert wheel / radial menu.
-    private let outerR: CGFloat = 118, bandInnerR: CGFloat = 66, hubR: CGFloat = 58
+    static let outerRadius: CGFloat = 118
+    private let outerR: CGFloat = DropDiscView.outerRadius, bandInnerR: CGFloat = 66, hubR: CGFloat = 58
     private let slots: [(MediaKind, String, String)] = [
         (.image, "photo", "Images"), (.video, "film", "Video"), (.audio, "waveform", "Audio"),
         (.document, "doc.text", "Documents"), (.pdf, "doc.richtext", "PDF"), (.font, "textformat", "Fonts"),
@@ -250,6 +329,7 @@ final class DropDiscView: NSView {
             : isTargeted ? "Release to convert"
             : hoverIndex.map { slots[$0].2 }
             ?? (hoverHub ? "Choose a file" : "Drop to convert")
+        let subtext: String? = (pinned && hoverHub && !isTargeted && !loading) ? "or drag to move" : nil
         let dotY = c.y + 9
         let dot = NSBezierPath(ovalIn: NSRect(x: c.x - 3, y: dotY - 3, width: 6, height: 6))
         dot.lineWidth = 1
@@ -260,6 +340,11 @@ final class DropDiscView: NSView {
             let sz = (text as NSString).size(withAttributes: a)
             (text as NSString).draw(at: NSPoint(x: c.x - sz.width / 2, y: c.y - 12), withAttributes: a)
         }
+        if let subtext {
+            let a: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 9.5, weight: .regular), .foregroundColor: Self.n400]
+            let sz = (subtext as NSString).size(withAttributes: a)
+            (subtext as NSString).draw(at: NSPoint(x: c.x - sz.width / 2, y: c.y - 26), withAttributes: a)
+        }
     }
 
     // MARK: Mouse
@@ -268,15 +353,41 @@ final class DropDiscView: NSView {
         let p = convert(event.locationInWindow, from: nil)
         hoverIndex = index(at: p)
         hoverHub = hypot(p.x - c.x, p.y - c.y) <= hubR
+        if pinned { (hoverHub ? NSCursor.openHand : NSCursor.arrow).set() }
     }
-    override func mouseExited(with event: NSEvent) { hoverIndex = nil; hoverHub = false }
+    override func mouseExited(with event: NSEvent) {
+        hoverIndex = nil; hoverHub = false
+        if pinned { NSCursor.arrow.set() }
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        downEvent = event
+        movedWindow = false
+    }
+
+    // Pinned: drag the center to move the disc around the screen.
+    override func mouseDragged(with event: NSEvent) {
+        guard pinned, !movedWindow, let down = downEvent, let window else { return }
+        let start = convert(down.locationInWindow, from: nil)
+        guard hypot(start.x - c.x, start.y - c.y) <= hubR else { return }
+        let now = convert(event.locationInWindow, from: nil)
+        guard hypot(now.x - start.x, now.y - start.y) > 3 else { return }
+        movedWindow = true
+        NSCursor.closedHand.set()
+        window.performDrag(with: down)
+        NSCursor.openHand.set()
+    }
 
     override func mouseUp(with event: NSEvent) {
+        defer { downEvent = nil }
+        if movedWindow { movedWindow = false; return } // that was a move, not a click
         let p = convert(event.locationInWindow, from: nil)
         if let i = index(at: p) { onPick?(slots[i].0) }           // a section: pick that kind of file
         else if hypot(p.x - c.x, p.y - c.y) <= hubR { onPick?(nil) } // center: pick anything
-        else { window?.close() }
+        else if !pinned { window?.close() }
     }
+
+    override func rightMouseUp(with event: NSEvent) { window?.close() }
 
     // MARK: Drop destination
 

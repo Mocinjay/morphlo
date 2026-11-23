@@ -6,6 +6,7 @@ import AppKit
 final class FormatWheel {
     static let shared = FormatWheel()
     private var panel: WheelPanel?
+    var isVisible: Bool { panel?.isVisible ?? false }
 
     /// Results land next to each original (or in Downloads if that folder is read-only).
     /// `onDone` gets the outputs, e.g. so the shelf can show them.
@@ -36,7 +37,10 @@ final class FormatWheel {
         ordered = ordered.filter { !same.contains($0.id) } + ordered.filter { same.contains($0.id) }
 
         let p = WheelPanel(files: files, targets: ordered, sameIDs: same, mixedGroups: groups.count > 1, onDone: onDone)
-        p.onClose = { [weak self] in self?.panel = nil }
+        p.onClose = { [weak self, weak p] in
+            if self?.panel === p { self?.panel = nil }
+            DropDisc.shared.wheelClosed()
+        }
         panel = p
         p.show(at: point ?? NSEvent.mouseLocation)
         Log.write("Wheel: \(files.count) file(s), \(ordered.count) formats")

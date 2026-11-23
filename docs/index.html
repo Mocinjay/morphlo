@@ -45,7 +45,7 @@
     <a class="brand" href="#top" aria-label="Morphlo home">
       <svg class="bf" aria-hidden="true"><use href="#bfly"/></svg>
       <span>Morphlo</span>
-      <span class="pill mono">v0.1.4</span>
+      <span class="pill mono">v0.1.5</span>
     </a>
     <nav aria-label="Primary">
       <a class="hide-sm" href="#video">Demo</a>
@@ -140,16 +140,11 @@
 </section>
 
 <!-- ============ WATCH ============ -->
-<section class="sec sec-watch" id="video" aria-labelledby="video-h">
+<section class="sec sec-watch" id="video" aria-label="Demo video">
   <div class="wrap">
-    <header class="sec-head reveal">
-      <p class="eyebrow mono">watch / 0:42</p>
-      <h2 id="video-h">See it in 42 seconds.</h2>
-      <p class="sub">The HEIC that won't upload, the same drag with Morphlo on, the convert wheel, and why nothing ever leaves your Mac.</p>
-    </header>
     <figure class="film reveal">
       <div class="film-frame">
-        <video id="film" src="media/morphlo-demo.mp4" poster="media/morphlo-demo-poster.jpg" width="1920" height="1080" preload="none" playsinline controls aria-describedby="film-cap">
+        <video id="film" src="media/morphlo-demo.mp4" poster="media/morphlo-demo-poster.jpg" width="1920" height="1080" preload="none" playsinline controls>
           <a href="media/morphlo-demo.mp4">Download the Morphlo demo video (MP4, 3.6 MB)</a>
         </video>
         <button class="film-play" type="button" id="film-play" aria-label="Watch the demo, 0:42" hidden>
@@ -161,8 +156,11 @@
         </button>
       </div>
       <p class="film-err" id="film-err" hidden>The video couldn't load. <a href="media/morphlo-demo.mp4">Download the MP4 (3.6&nbsp;MB)</a>.</p>
-      <figcaption class="film-cap mono" id="film-cap">An animated walkthrough of how Morphlo works. The only sound is quiet clicks, so it works muted.</figcaption>
     </figure>
+    <div class="star reveal">
+      <p class="star-txt"><b>Enjoying Morphlo?</b> It's free and open source. A star on GitHub helps other people find it.</p>
+      <a class="star-btn" href="https://github.com/Mocinjay/morphlo"><svg aria-hidden="true"><use href="#i-star"/></svg><span>Star on GitHub</span></a>
+    </div>
   </div>
 </section>
 
@@ -240,7 +238,7 @@
         <li><span class="keys"><kbd>⌃</kbd><kbd>⌥</kbd><kbd>M</kbd></span><span><b>Open the drop disc anywhere.</b> Both shortcuts can be changed.</span></li>
         <li><span class="keys"><kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd></span><span><b>Select files in Finder</b> and convert them straight away.</span></li>
         <li><span class="keys"><kbd class="wide">right-click</kbd></span><span><b>Convert with Morphlo</b> from Finder's Quick Actions.</span></li>
-        <li><span class="keys"><kbd class="ico"><svg aria-label="menu-bar butterfly"><use href="#bfly"/></svg></kbd></span><span><b>Click the butterfly</b> in the menu bar for the drop disc. Right-click it for settings.</span></li>
+        <li><span class="keys"><kbd class="ico"><svg aria-label="menu-bar butterfly"><use href="#bfly"/></svg></kbd></span><span><b>Click the butterfly</b> in the menu bar for the drop disc. It stays open until you click again; drag its center to move it. Right-click the butterfly for settings.</span></li>
       </ol>
       <figure class="real">
         <img src="wheel.png" width="460" height="460" loading="lazy" alt="Screenshot of the real Morphlo convert wheel: gray ring of format segments around a dark hub">
@@ -286,22 +284,35 @@
       <p class="eyebrow mono">04 / formats</p>
       <h2>What turns into what.</h2>
     </header>
-    <div class="fmt reveal">
-      <article class="fcard"><h3 class="mono">Images</h3><p class="from mono">HEIC, JPEG, PNG, TIFF, RAW…</p><p class="to mono">JPEG · PNG · HEIC · AVIF · TIFF · GIF · BMP · PDF</p></article>
-      <article class="fcard"><h3 class="mono">Video</h3><p class="from mono">MOV, MP4, M4V, 3GP</p><p class="to mono">MP4 (H.264) · MP4 (HEVC) · MOV (ProRes) · animated GIF · audio only</p></article>
-      <article class="fcard"><h3 class="mono">Audio</h3><p class="from mono">M4A, MP3, WAV, AIFF, FLAC, CAF</p><p class="to mono">M4A (AAC) · M4A (HE-AAC) · WAV · AIFF · FLAC · ALAC</p></article>
-      <article class="fcard"><h3 class="mono">Documents</h3><p class="from mono">Markdown, Word, ODT, RTF, HTML, TXT</p><p class="to mono">PDF · DOCX · DOC · ODT · RTF · TXT · HTML</p></article>
-      <article class="fcard"><h3 class="mono">PDF</h3><p class="from mono">PDF</p><p class="to mono">PNG or JPEG per page · DOCX · ODT · RTF · TXT</p></article>
-      <article class="fcard"><h3 class="mono">Fonts</h3><p class="from mono">TTF, OTF, WOFF, WOFF2</p><p class="to mono">WOFF2 · WOFF · TTF/OTF</p></article>
+    <div class="fx reveal" id="fx">
+      <div class="fx-in">
+        <label class="fx-ask" for="fx-q">
+          <span class="fx-k mono">what do you have?</span>
+          <span class="fx-field">
+            <span class="fx-dot mono" aria-hidden="true">.</span>
+            <input id="fx-q" class="mono" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="heic, mov, docx… or drop a file" aria-describedby="fx-hint" value="heic">
+          </span>
+        </label>
+        <p class="fx-hint" id="fx-hint">Type an extension, pick one below, or drop a file anywhere on this box. Only its name is read; nothing is uploaded.</p>
+        <div class="fx-groups" id="fx-groups"></div>
+      </div>
+      <div class="fx-out">
+        <div class="fx-head">
+          <span class="fx-file mono" id="fx-file">IMG_0464.HEIC</span>
+          <span class="fx-kind mono" id="fx-kind">image</span>
+        </div>
+        <p class="fx-k mono" id="fx-to-k">can become</p>
+        <ul class="fx-targets" id="fx-targets"></ul>
+        <p class="fx-msg" id="fx-msg" hidden></p>
+        <div class="fx-cli">
+          <code class="mono" id="fx-cmd"></code>
+          <button class="copy mono" type="button" id="fx-copy" data-copy=""><svg aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-lbl">Copy</span></button>
+        </div>
+        <p class="fx-note mono">Pick a format to change the command. The same thing happens in the wheel.</p>
+        <p class="sr-only" aria-live="polite" id="fx-live"></p>
+      </div>
     </div>
     <p class="fine reveal">Not offered: MP3 encoding, WebM, MKV, OGG and WebP output. macOS can't encode them natively, and Morphlo doesn't bundle extra encoders.</p>
-    <div class="term cli reveal">
-      <div class="term-top mono"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>command line</span></div>
-<pre class="mono"><code><span class="c"># convert from scripts too</span>
-<span class="p">$</span> /Applications/Morphlo.app/Contents/MacOS/Morphlo --convert-to jpg IMG_0001.HEIC
-<span class="p">$</span> /Applications/Morphlo.app/Contents/MacOS/Morphlo --targets clip.mov
-<span class="p">$</span> /Applications/Morphlo.app/Contents/MacOS/Morphlo --convert IMG_0002.MOV --out ./ai</code></pre>
-    </div>
   </div>
 </section>
 

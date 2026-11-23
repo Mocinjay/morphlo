@@ -8,6 +8,11 @@ Morphlo is a free menu-bar app for your Mac:
   - Or right-click a file in Finder → **Convert with Morphlo**.
   - Or select a file and press **⌥⌘K**.
 
+### New in 0.1.5
+- **The drop disc stays open.** Click 🦋 (or press ⌃⌥M) and the disc stays up while you go find a file: clicking elsewhere no longer closes it. Close it with 🦋 again, ⌃⌥M again, Esc, or a right-click.
+- **Move it anywhere.** Drag the disc by its center.
+- **It comes back.** After you drop a file and pick a format, the disc returns so you can convert the next one. Tapping ⇧ mid-drag brings it to your cursor.
+
 ### New in 0.1.4
 - **A welcome tour.** The first time you open Morphlo, four short slides show what it does: drag a HEIC or a video straight into any chat or upload box, convert any file with the wheel, and everything stays on your Mac. Replay it anytime: right-click 🦋 → **Welcome Tour…**
 - macOS asks for Photos access after the tour, instead of on top of it.
